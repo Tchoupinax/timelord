@@ -19,7 +19,7 @@ const config: Config = {
     ? `https://tchoupinax.github.io`
     : "https://timelord.example.com",
   baseUrl: process.env.GITHUB_PAGES
-    ? `https://tchoupinax.github.io`
+    ? `/timelord/`
     : "https://timelord.example.com",
 
   // GitHub pages deployment config.
