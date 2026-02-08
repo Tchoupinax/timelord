@@ -7,6 +7,12 @@
 [![NodeJS](https://img.shields.io/badge/Node.js_v24-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)](#)
 [![Golang](https://img.shields.io/badge/Golang_v1.24-118293?style=for-the-badge&logo=go&logoColor=white)](#)
 
+## Agent installation
+
+```bash
+curl -o- -s https://raw.githubusercontent.com/Tchoupinax/timelord/refs/heads/master/scripts/timelord-agent-installation.sh| bash
+```
+
 ## Table of content
 
 [FAQ: explain me how does it work](#heading-title)
