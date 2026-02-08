@@ -1,8 +1,9 @@
 {
   "name": "timelord-server",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "inspect": "node-modules-inspector",
