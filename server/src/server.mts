@@ -38,7 +38,7 @@ export async function createServer() {
 export async function startServer() {
   const server = await createServer();
 
-  const port = env.PORT.defined ? env.PORT.value : 8080;
+  const port = env.PORT.defined ? env.PORT.value : 9988;
 
   try {
     await server.listen({ port, host: "0.0.0.0" });

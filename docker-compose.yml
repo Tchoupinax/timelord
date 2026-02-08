@@ -22,7 +22,7 @@ services:
     ports:
       - "8081:8081"
     environment:
-      PGWEB_DATABASE_URL: "postgres://timelord:bd3907f9-84f5-4d32-bdb3-37c0bdadac70@10.215.0.10:5432/timelord?sslmode=disable"
+      PGWEB_DATABASE_URL: "postgres://postgres:mysecret@localhost:5439/postgres?sslmode=disable"
 
   server:
     build:

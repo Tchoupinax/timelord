@@ -21,7 +21,7 @@ func main() {
 
 	apiUrl := os.Getenv("API_URL")
 	if apiUrl == "" {
-		apiUrl = "http://localhost:8080"
+		apiUrl = "http://localhost:9988"
 	}
 
 	go heartbeat(apiUrl)
