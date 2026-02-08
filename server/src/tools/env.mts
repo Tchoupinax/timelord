@@ -21,7 +21,6 @@ const fake = {
   API_URL: "test_fake",
   CI_COMMIT_SHA: "test_fake",
   CI_PIPELINE_CREATED: new Date().getTime().toString(),
-  JOB_DEFAULT_TIMEOUT: "1h",
 
   OIDC_CLIENT_ID: "test_fake",
   OIDC_CLIENT_SECRET: "test_fake",
@@ -44,7 +43,6 @@ export const env = validate({
     DISABLE_AUTHENTICATION: booleanWithDefault(false),
     GIT_CONFIGS_REPOSITORY: stringWithDefault("/tmp"),
     DATABASE_URL: string,
-    JOB_DEFAULT_TIMEOUT: string,
 
     OIDC_CLIENT_ID:
       process.env.DISABLE_AUTHENTICATION === "true" ? optional(string) : string,

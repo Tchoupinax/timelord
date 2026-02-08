@@ -7,96 +7,80 @@
 [![NodeJS](https://img.shields.io/badge/Node.js_v24-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)](#)
 [![Golang](https://img.shields.io/badge/Golang_v1.24-118293?style=for-the-badge&logo=go&logoColor=white)](#)
 
-## Table of content
-
-[FAQ: explain me how does it work](#heading-title)
-[How jobs are performed?](#heading-title)
-
 ## Overview
 
-TimeLord is your friendly task manager that helps you run jobs and commands across multiple machines.
-
-### What does it do?
+**TimeLord** is your friendly task manager that helps you run jobs and commands across multiple machines. 🚀
 
 Imagine you need to:
-
 - Run backups on multiple servers at specific times
 - Execute maintenance tasks across your infrastructure
 
 TimeLord makes this easy! You just tell it what to do and when to do it through a nice web interface, and it takes care of executing these tasks on your behalf.
 
-### How does it work?
+## Key Features
 
-1. **Central Control**: A web dashboard where you manage everything
-2. **Agents**: Small programs that run on your computers and execute the tasks
-3. **Secure Communication**: Everything is authenticated and encrypted
-4. **Smart Scheduling**: Run tasks once, on a schedule, or based on events
+- 🎯 Schedule and manage jobs across multiple servers
+- 🤖 Lightweight agents deployed on your infrastructure
+- 🔒 Secure with OIDC authentication and Vault integration
+- 📊 Real-time job monitoring and logging
+- 🔧 Execute scripts directly from Git repositories
 
-It's like having a reliable assistant that makes sure all your automated tasks run smoothly across your entire infrastructure.
+## 📚 Documentation
 
-## Features
+**All detailed documentation has been moved to the official docs site!** 
 
-## Configuration
+👉 **[Read the full documentation](./landing+docs/docs)** for:
+- [Getting Started Guide](./landing+docs/docs/intro.md)
+- [Installation Instructions](./landing+docs/docs/installation.md)
+- [Configuration Reference](./landing+docs/docs/configuration.md)
+- [Architecture & How It Works](./landing+docs/docs/architecture.md)
+- [Features Overview](./landing+docs/docs/features.md)
 
-| variable               | required?                | default | comment                                                                                                       |
-| ---------------------- | ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------- |
-| DISABLE_AUTHENTICATION | no                       | false   | If authentication is disabled, all API is opened and you have only one user because you access to everything. |
-| OIDC_CLIENT_ID         | yes (if auth is enabled) |         |                                                                                                               |
-| OIDC_CLIENT_SECRET     | yes (if auth is enabled) |         |                                                                                                               |
-| OIDC_PROVIDER_NAME     | yes (if auth is enabled) |         |                                                                                                               |
-| OIDC_PROVIDER_IMAGE    | yes (if auth is enabled) |         |                                                                                                               |
+## Quick Start
 
-### Store password inside Vault backend
+The fastest way to get started is with Docker Compose:
 
-- VAULT_ADDR: `Address for Vault`
-- VAULT_PATH: `{secret-engine-name}/data/{secret-name}`
-- VAULT_TOKEN: `Token to access Vault API`
-
-### How to install
-
-[Install agent](/agent/README.md)
-
-## FAQ: explain me how does it work
-
-### Git configurations
-
-```mermaid
-sequenceDiagram
-    User->>TimelordServer: Configure git configuration <br> (URL + Authentication)
-    TimelordServer->>TimelordDatabase: Persist configuration + SSHKey
-    TimelordDatabase-->>TimelordServer: OK
-    TimelordServer-->>User: OK
-    User->>User: Later
-    TimelordServer->>Git: Clone repository request
-    Git-->>TimelordServer: Write git content on disk
-    User->>Git: Commit a script
-    Git-->>User: OK
+```bash
+git clone https://github.com/Tchoupinax/timelord.git
+cd timelord
+docker-compose up -d
 ```
 
-### How jobs are performed?
+Then visit `http://localhost:9988` to access the dashboard.
 
-```mermaid
-sequenceDiagram
-  Agent->>Server: Do you have a job for me?
-  Server-->>Agent: No
-  Agent->>Agent: Waits a while
-  Agent->>Server: Do you have a job for me?
-  Server-->>Agent: Yes, take this job<br>(+ I tell you if you require assets)
-  alt when not asset is required
-    Agent->>Agent: Perfoms the job
-  else when asset is required
-    Agent->>Server: Request asset for this job
-    Server->>Agent: return compressed asset
-    Agent->>Agent: uncompress asset in the context
-    Agent->>Agent: Perfoms the job in the same context <br>of extracted asset
-  end
-  Agent-->>Server: Streams logs...
-  Agent->> Server: Job done
-```
+For more detailed setup instructions, see the [Installation Guide](./landing+docs/docs/installation.md).
 
-### Alternative project
+## Architecture
 
-- [CronMaster](https://github.com/fccview/cronmaster)
-- [IronMount](https://github.com/nicotsx/ironmount)
+TimeLord consists of three main components:
 
-gerer les erreurs quand une variabled d'env n'est pas trouvée et l'afficher sur la page pour l'user
+1. **Server** (Node.js + TypeScript): Central control system
+2. **UI** (Nuxt.js): Web dashboard for management
+3. **Agent** (Go): Lightweight program running on your machines
+
+## Project Structure
+
+- **`server/`** - Node.js backend API
+- **`ui/`** - Nuxt.js frontend dashboard
+- **`agent/`** - Go-based agent for executing jobs
+- **`landing+docs/`** - Docusaurus documentation site
+- **`scripts/`** - Utility scripts for development and deployment
+
+## Component Documentation
+
+- [Agent Documentation](./agent/README.md)
+- [Server Documentation](./server/README.md)
+- [UI Documentation](./ui/README.md)
+
+## Contributing
+
+We welcome contributions! Please feel free to submit a pull request.
+
+## License
+
+[Add your license information here]
+
+---
+
+**Need help?** Check out the [documentation](./landing+docs/docs) or open an [issue on GitHub](https://github.com/Tchoupinax/timelord/issues).
+
