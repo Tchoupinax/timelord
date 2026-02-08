@@ -5,7 +5,9 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { logger } from "../logger.mts";
 import { env } from "../tools/env.mts";
 
-export function extractHumanMetadata(
+// ⚠️ DO NOT REMOVE async, fastify uses signature to adapt its behavior
+// eslint-disable-next-line @typescript-eslint/require-await
+export async function extractHumanMetadata(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
