@@ -63,7 +63,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern=v{{version}}
+            type=semver,pattern={{raw}}
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -141,7 +141,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern=v{{version}}
+            type=semver,pattern={{raw}}
 
       - name: Build and push
         uses: docker/build-push-action@v6
