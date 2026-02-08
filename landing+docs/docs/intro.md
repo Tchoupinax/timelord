@@ -3,116 +3,39 @@ sidebar_position: 1
 sidebar_label: Getting Started
 ---
 
-# Getting Started with Timelord
+# Getting Started with TimeLord
 
-Welcome to **Timelord** - your friendly task manager that helps you run jobs and commands across multiple computers! ⏰
+Welcome to **TimeLord** — your friendly task manager that helps you run jobs and commands across multiple computers!
 
-## What is Timelord?
+## What is TimeLord?
 
-Timelord is a distributed task orchestration system that makes it easy to:
+TimeLord is a distributed task orchestration system that makes it easy to:
 
 - 🎯 Schedule and manage CRON jobs across multiple servers
 - 🤖 Deploy agents that execute tasks on your behalf
-- 🔒 Keep your infrastructure secure with OIDC authentication
 - 📊 Monitor task execution in real-time
-- 🔧 Execute scripts directly from Git repositories
+- 🔧 Manage scripts as code with git repositories
 
-## Quick Start
+## How Does It Work?
 
-### What you'll need
-
-- **Node.js** version 20.0 or above for the server
-- **Go** version 1.24 or above for the agent
-- **PostgreSQL** database for data storage
-- (Optional) **Vault** for secure secret management
-- (Optional) **OIDC provider** for authentication
-
-### Architecture Overview
-
-Timelord consists of three main components:
+TimeLord consists of three main components:
 
 1. **Server** (Node.js + TypeScript): The central control system
-2. **UI** (Nuxt.js): Beautiful web dashboard for management
+2. **UI** (Nuxt.js): Web dashboard for management
 3. **Agent** (Go): Lightweight program that runs on your servers
 
-## Installation
+For detailed information about how these components interact, see [How It Works](./architecture.md).
 
-### 1. Start the Server
+## What's Next?
 
-First, clone the repository and start the server:
+Explore the documentation to learn more:
 
-```bash
-git clone https://github.com/yourusername/timelord.git
-cd timelord/server
-```
-
-The server will start on `http://localhost:9988`.
-
-### 2. Launch the UI
-
-In a new terminal, start the web interface:
-
-```bash
-cd timelord/ui
-```
-
-The UI will be available at `http://localhost:3000`.
-
-### 3. Install an Agent
-
-On the server where you want to run tasks:
-
-```bash
-# Download the agent
-wget https://github.com/yourusername/timelord/releases/latest/download/timelord-agent_linux_amd64.tar.gz
-
-# Extract
-tar -xzf timelord-agent_linux_amd64.tar.gz
-
-# Run the installation script
-./install.sh
-```
-
-Follow the prompts to configure your agent with the server URL and authentication token.
-
-## Configuration
-
-### Server Environment Variables
-
-| Variable                 | Required | Default | Description                               |
-| ------------------------ | -------- | ------- | ----------------------------------------- |
-| `DISABLE_AUTHENTICATION` | No       | `false` | Disable authentication (for testing only) |
-| `OIDC_CLIENT_ID`         | Yes\*    | -       | OIDC client ID                            |
-| `OIDC_CLIENT_SECRET`     | Yes\*    | -       | OIDC client secret                        |
-| `OIDC_PROVIDER_NAME`     | Yes\*    | -       | OIDC provider name                        |
-| `OIDC_PROVIDER_IMAGE`    | Yes\*    | -       | OIDC provider logo URL                    |
-| `DATABASE_URL`           | Yes      | -       | PostgreSQL connection string              |
-
-\*Required if authentication is enabled
-
-### Vault Integration (Optional)
-
-To store secrets securely in Vault:
-
-- `VAULT_ADDR`: Vault server address
-- `VAULT_PATH`: Path in format `{engine}/data/{secret-name}`
-- `VAULT_TOKEN`: Token to access Vault API
-
-## Next Steps
-
-Now that you have Timelord set up, you can:
-
-<!--- 📖 [Create your first job](./tutorial-basics/create-a-document.md)
-- 🤖 [Manage agents](./tutorial-basics/create-a-page.md)
-- 🔧 [Configure Git integration](./tutorial-basics/create-a-blog-post.md)
-- 🔒 [Set up secrets management](./tutorial-basics/deploy-your-site.md)-->
+- 📋 [Features](./features.md) - See what TimeLord can do
+- 🏗️ [How It Works](./architecture.md) - Understand the architecture
+- 🚀 [Installation](./installation.md) - Detailed setup instructions
+- ⚙️ [Configuration](./configuration.md) - Configure your setup
 
 ## Need Help?
 
-- 📚 Browse the [documentation](./intro)
 - 🐛 Report issues on [GitHub](https://github.com/Tchoupinax/timelord/issues)
-- 💬 Join our community discussions
-
----
-
-**Happy orchestrating! 🎉**
+- 💬 Check out [alternative projects](./alternatives.md) if you're exploring options
