@@ -3,15 +3,26 @@
 # Linux: It will create a service to run the agent
 # MacOS: To be defined
 
-# First argument should be a valid Gitea token
 AGENT_TOKEN=$1
-
-SYSTEMCTL_FILENAME="/etc/systemd/system/timelord.service"
-
 if [[ $AGENT_TOKEN == "" ]]; then
-  echo "⚠️ You must provide Agent token as second argument"
+  echo "⚠️ You must provide agent token as first argument"
+  echo ""
+  echo "usage: ./timelord.sh my-token-123 https://api.domain.com"
   exit 1
 fi
+
+API_URL=$2
+if [[ $API_URL == "" ]]; then
+  echo "⚠️ You must provide api url as second argument"
+  echo ""
+  echo "usage: ./timelord.sh my-token-123 https://api.domain.com"
+  exit 1
+fi
+
+###########################################################################
+###########################################################################
+
+SYSTEMCTL_FILENAME="/etc/systemd/system/timelord.service"
 
 ARCH=$(arch)
 OS=$(uname)
@@ -24,9 +35,9 @@ fi
 
 NAME="timelord_$OS""_$ARCH.tar.gz"
 
-curl -s -H "Authorization: token $TOKEN" \
-  "https://github.com/Tchoupinax/timelord/releases/download/latest/$NAME" \
-  --output $NAME
+curl -L \
+  "https://github.com/Tchoupinax/timelord/releases/latest/download/$NAME" \
+  -o "$NAME"
 
 tar xvf $NAME
 rm -rf $NAME
@@ -51,7 +62,7 @@ StandardError=syslog
 SyslogIdentifier=TimelordAgent
 User=root
 Group=root
-Environment=API_URL=https://crons.mysupercloud.dev/api
+Environment=API_URL=$API_URL
 Environment=AGENT_TOKEN=$AGENT_TOKEN
 
 [Install]
@@ -68,5 +79,5 @@ EOF
   # Show logs
   # sudo journalctl -u timelord.service -e
 else
-  AGENT_TOKEN=$AGENT_TOKEN API_URL=https://crons.mysupercloud.dev/api timelord
+  AGENT_TOKEN=$AGENT_TOKEN API_URL=$API_URL timelord
 fi
