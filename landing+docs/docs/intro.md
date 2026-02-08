@@ -46,7 +46,7 @@ git clone https://github.com/yourusername/timelord.git
 cd timelord/server
 ```
 
-The server will start on `http://localhost:8080`.
+The server will start on `http://localhost:9988`.
 
 ### 2. Launch the UI
 

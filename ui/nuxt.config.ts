@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     public: {
       apiEndpoint: process.env.API_URL
         ? process.env.API_URL
-        : "http://localhost:8080",
+        : "http://localhost:9988",
       buildDate: new Date().toISOString(),
       commit: process.env.CI_COMMIT_SHA,
     },

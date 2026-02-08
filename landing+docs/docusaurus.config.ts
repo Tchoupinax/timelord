@@ -17,10 +17,8 @@ const config: Config = {
   // Set the production url of your site here
   url: process.env.GITHUB_PAGES
     ? `https://tchoupinax.github.io`
-    : "https://timelord.example.com",
-  baseUrl: process.env.GITHUB_PAGES
-    ? `/timelord/`
-    : "https://timelord.example.com",
+    : "http://localhost:3001",
+  baseUrl: process.env.GITHUB_PAGES ? `/timelord/` : "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
