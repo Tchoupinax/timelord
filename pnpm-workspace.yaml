@@ -1,0 +1,15 @@
+packages:
+  - agent
+  - landing+docs
+  - server
+  - ui
+
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - "@prisma/engines"
+  - "@swc/core"
+  - core-js
+  - core-js-pure
+  - esbuild
+  - prisma
+  - unrs-resolver

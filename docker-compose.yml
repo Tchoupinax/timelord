@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:18
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_PASSWORD: mysecret
+
+  vault:
+    image: hashicorp/vault:1.21
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_API_ADDR: "http://0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    entrypoint: vault server -dev -dev-listen-address="0.0.0.0:8200" -dev-root-token-id="root"
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    ports:
+      - "8081:8081"
+    environment:
+      PGWEB_DATABASE_URL: "postgres://timelord:bd3907f9-84f5-4d32-bdb3-37c0bdadac70@10.215.0.10:5432/timelord?sslmode=disable"
+
+  server:
+    build:
+      dockerfile: server/Dockerfile
+    env_file: server/.env
+    volumes:
+      - ./server:/app/server:cached

@@ -1,0 +1,118 @@
+name: Pull request analysis
+
+on:
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  check-labels:
+    name: ⚖️ Relabelling
+    runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: read
+      issues: write
+      pull-requests: write
+      statuses: write
+
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_KEY }}
+
+      - name: labels
+        uses: fuxingloh/multi-labeler@v4
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+
+  build-ui:
+    name: "🟢 Build user interface (Nuxt.js project)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: "Setup PNPM"
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          version: 10.29.1
+
+      - name: Use Node.js 25
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25
+          cache: "pnpm"
+
+      - name: Build, lint and test the package
+        run: |
+          pnpm install --frozen-lockfile --filter timelord-ui
+          pnpm build --filter timelord-ui
+
+  build-server:
+    name: "🟣 Build server and generate prisma"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: "Setup PNPM"
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          version: 10.29.1
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Build, lint and test the package
+        run: |
+          pnpm install --frozen-lockfile --filter timelord-server
+          cd server && npx prisma generate && pnpm build
+        env:
+          API_URL: "_"
+          CI_COMMIT_SHA: "_"
+          CI_PIPELINE_CREATED: "1"
+          DATABASE_URL: "_"
+          JOB_DEFAULT_TIMEOUT: "_"
+          OIDC_CLIENT_ID: "_"
+          OIDC_CLIENT_SECRET: "_"
+          OIDC_CONFIGURATION_URL: "_"
+          OIDC_PROVIDER_IMAGE: "_"
+          OIDC_PROVIDER_NAME: "_"
+          UI_URL: "_"
+          VAULT_ADDR: "_"
+          VAULT_PATH: "_"
+          VAULT_TOKEN: "_"
+
+  build-agent:
+    name: "🔵 Build agent binary"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - id: vars
+        run: |
+          cd agent
+          echo "go_version=$(cat go.mod | head -3 | tail -1 | cut -d ' ' -f 2)" >> $GITHUB_OUTPUT
+          echo "Use Golang version $(cat go.mod | head -3 | tail -1 | cut -d ' ' -f 2)"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ steps.vars.outputs.go_version }}
+
+      - name: Compile the source
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: build --clean --snapshot
+          version: "~> v2"
+          workdir: agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,11 @@
+node_modules
+*.tar.gz
+.turbo
+
+dist
+
+agent/main
+server/cron
+server/tmp/*
+
+server/prisma/generated/*

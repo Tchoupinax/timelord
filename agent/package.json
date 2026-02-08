@@ -1,0 +1,11 @@
+{
+  "name": "agent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "go build -o bin/executor .",
+    "watch": "vai go run *.go",
+    "test": "go test ./...",
+    "lint": "go fmt ./... && golangci-lint run || true"
+  }
+}

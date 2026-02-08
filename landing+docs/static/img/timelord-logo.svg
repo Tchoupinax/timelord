@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fcd34d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fb923c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer circle with gradient -->
+  <circle cx="32" cy="32" r="28" fill="url(#clockGradient)" stroke="#d97706" stroke-width="3"/>
+  
+  <!-- Clock face -->
+  <circle cx="32" cy="32" r="24" fill="white" opacity="0.9"/>
+  
+  <!-- Hour markers -->
+  <circle cx="32" cy="12" r="2" fill="#78350f"/>
+  <circle cx="32" cy="52" r="2" fill="#78350f"/>
+  <circle cx="52" cy="32" r="2" fill="#78350f"/>
+  <circle cx="12" cy="32" r="2" fill="#78350f"/>
+  
+  <!-- Clock hands -->
+  <!-- Hour hand -->
+  <line x1="32" y1="32" x2="32" y2="20" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Minute hand -->
+  <line x1="32" y1="32" x2="44" y2="32" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="3" fill="#d97706"/>
+</svg>
+

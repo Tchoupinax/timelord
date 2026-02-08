@@ -1,0 +1,312 @@
+/**
+ * Timelord docs - same style as the app UI (white / black / gray)
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --ifm-color-primary: #374151;
+  --ifm-color-primary-dark: #1f2937;
+  --ifm-color-primary-darker: #111827;
+  --ifm-color-primary-darkest: #030712;
+  --ifm-color-primary-light: #4b5563;
+  --ifm-color-primary-lighter: #6b7280;
+  --ifm-color-primary-lightest: #9ca3af;
+
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #f9fafb;
+
+  --ifm-font-color-base: #111827;
+  --ifm-heading-color: #111827;
+
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.9);
+  --ifm-navbar-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+
+  --ifm-footer-background-color: rgba(255, 255, 255, 0.9);
+  --ifm-footer-color: #374151;
+
+  --ifm-global-border-width: 1px;
+  --ifm-color-emphasis-300: #d1d5db;
+  --ifm-link-color: #111827;
+  --ifm-link-hover-color: #374151;
+
+  --ifm-code-font-size: 90%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.06);
+
+  --ifm-card-border-radius: 1rem;
+  --ifm-global-radius: 1rem;
+
+  --ifm-font-family-base: "Inter", system-ui, sans-serif;
+  --ifm-heading-font-family: "Inter", system-ui, sans-serif;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #e5e7eb;
+  --ifm-color-primary-dark: #d1d5db;
+  --ifm-color-primary-darker: #9ca3af;
+  --ifm-color-primary-darkest: #6b7280;
+  --ifm-color-primary-light: #f3f4f6;
+  --ifm-color-primary-lighter: #f9fafb;
+  --ifm-color-primary-lightest: #ffffff;
+
+  --ifm-background-color: #030712;
+  --ifm-background-surface-color: #111827;
+
+  --ifm-font-color-base: #f9fafb;
+  --ifm-heading-color: #f9fafb;
+
+  --ifm-navbar-background-color: rgba(17, 24, 39, 0.95);
+
+  --ifm-footer-background-color: rgba(17, 24, 39, 0.95);
+  --ifm-footer-color: #d1d5db;
+
+  --ifm-color-emphasis-300: #374151;
+  --ifm-link-color: #f3f4f6;
+  --ifm-link-hover-color: #ffffff;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+}
+
+.navbar {
+  border-bottom: 1px solid var(--ifm-color-emphasis-300);
+  backdrop-filter: blur(8px);
+}
+
+.footer {
+  border-top: 1px solid var(--ifm-color-emphasis-300);
+  backdrop-filter: blur(8px);
+}
+
+html[data-theme="light"] {
+  background: #ffffff;
+  background-attachment: fixed;
+}
+
+html[data-theme="dark"] {
+  background: #030712;
+  background-attachment: fixed;
+}
+
+.card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+  background: var(--ifm-background-surface-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.card:hover {
+  border-color: #9ca3af;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.button {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+  font-family: var(--ifm-font-family-base);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  border-color: #6b7280;
+}
+
+.button--primary {
+  background: #111827;
+  color: #ffffff;
+  border-color: #374151;
+}
+
+.button--primary:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .button--primary {
+  background: #f9fafb;
+  color: #111827;
+  border-color: #6b7280;
+}
+
+[data-theme="dark"] .button--primary:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.button--secondary {
+  border-color: var(--ifm-color-emphasis-300);
+  color: var(--ifm-font-color-base);
+}
+
+.button--secondary:hover {
+  background: var(--ifm-background-surface-color);
+  border-color: #9ca3af;
+}
+
+.hero {
+  background: transparent;
+  border: none;
+}
+
+.hero .heroIconBox {
+  background: #111827;
+  color: #fff;
+}
+
+[data-theme="dark"] .hero .heroIconBox {
+  background: #f9fafb;
+  color: #111827;
+}
+
+.hero__title {
+  font-family: var(--ifm-heading-font-family);
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+}
+
+.hero__subtitle {
+  color: var(--ifm-font-color-base);
+  opacity: 0.9;
+}
+
+.navbar__item {
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.navbar__link:hover {
+  background-color: var(--ifm-background-surface-color);
+  border-radius: 1rem;
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme="dark"] .navbar__link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Doc sidebar: left bar menu links (e.g. "Getting Started") */
+.menu__link {
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  color: var(--ifm-font-color-base);
+  border: 1px solid transparent;
+}
+
+.menu__link:hover {
+  background-color: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme="dark"] .menu__link {
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme="dark"] .menu__link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--ifm-font-color-base);
+}
+
+.menu__link--active {
+  background-color: var(--ifm-background-surface-color);
+  border-left: 2px solid var(--ifm-color-primary);
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme="dark"] .menu__link--active {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--ifm-font-color-base);
+}
+
+/* Ensure sidebar list item doesn't clip or overflow */
+.menu__list-item {
+  margin-bottom: 0.25rem;
+}
+
+.table-of-contents {
+  border-left: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.admonition {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+}
+
+.prism-code {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+}
+
+.pagination-nav__link {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+}
+
+.pagination-nav__link:hover {
+  border-color: #9ca3af;
+  background-color: var(--ifm-background-surface-color);
+}
+
+.navbar__search-input {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+  background-color: var(--ifm-background-surface-color);
+}
+
+[data-theme="dark"] .navbar__search-input {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.footer__link-item,
+.footer__title {
+  color: inherit;
+}
+
+.footer__link-item:hover {
+  color: var(--ifm-color-primary);
+}
+
+/* Doc content */
+.markdown h1:first-child {
+  color: var(--ifm-heading-color);
+  font-family: var(--ifm-heading-font-family);
+}
+
+.markdown a {
+  font-weight: 500;
+}
+
+.markdown table {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.markdown table th,
+.markdown table td {
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+/* Doc sidebar (left bar) */
+.docSidebarContainer {
+  border-right: 1px solid var(--ifm-color-emphasis-300);
+}
+
+/* Left bar: "Getting Started" and other doc links - match UI style */
+.theme-doc-sidebar-container .menu__link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--ifm-font-family-base);
+  font-weight: 500;
+}
+
+.theme-doc-sidebar-container .menu__link--active {
+  border-left-width: 2px;
+  padding-left: calc(0.75rem - 2px);
+}
