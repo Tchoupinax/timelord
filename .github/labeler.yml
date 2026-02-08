@@ -62,6 +62,9 @@ labels:
       files:
         any:
           - "ui/**"
+        all:
+          - "!ui/package.json"
+
 #checks:
 #  - context: "Ready to merge"
 #    description: "Disable merging when 'draft' label is set."
