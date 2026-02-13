@@ -11,6 +11,7 @@ if (process.env.NODE_ENV !== "production") {
     options: {
       colorize: true,
       levelFirst: true,
+      singleLine: true,
       translateTime: "HH:MM:ss.l",
     },
   } satisfies LoggerOptions["transport"];

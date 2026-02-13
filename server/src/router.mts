@@ -136,7 +136,7 @@ export function router(fastify: FastifyInstance) {
     fastify.post("/secrets", createSecret);
   });
 
-  fastify.setErrorHandler(async (error, request, reply) => {
+  fastify.setErrorHandler(async (error, _, reply) => {
     console.log("Global error caught", error);
     reply.status(500).send({ msg: "Error" });
   });
