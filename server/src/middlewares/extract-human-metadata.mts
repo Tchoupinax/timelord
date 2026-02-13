@@ -4,6 +4,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../logger.mts";
 import { env } from "../tools/env.mts";
+import { randomUUID } from "node:crypto";
 
 // ⚠️ DO NOT REMOVE async, fastify uses signature to adapt its behavior
 // eslint-disable-next-line @typescript-eslint/require-await
@@ -12,6 +13,15 @@ export async function extractHumanMetadata(
   reply: FastifyReply,
 ) {
   logger.debug(`extractHumanMetadata - ${request.method} ${request.url}`);
+
+  if (env.DISABLE_AUTHENTICATION) {
+    requestContext.set("store", {
+      userId: randomUUID(),
+      isRobot: false,
+      isHuman: true,
+    });
+    return;
+  }
 
   if (
     !env.DISABLE_AUTHENTICATION &&
