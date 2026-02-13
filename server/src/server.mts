@@ -24,6 +24,7 @@ export async function createServer() {
       options: {
         colorize: true,
         levelFirst: true,
+        singleLine: true,
         translateTime: "HH:MM:ss.l",
       },
     };
