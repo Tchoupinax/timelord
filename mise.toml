@@ -1,7 +1,7 @@
 [tools]
 "go:github.com/sgtdi/vai" = "v1.2.1"
-go = "1.25"
-golangci-lint = "2.8.0"
+go = "1.26.0"
+golangci-lint = "2.9.0"
 node = "24"
 tilt = "latest"
 vault = "latest"
