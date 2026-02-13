@@ -124,6 +124,52 @@
 
     <main class="px-6 py-8 mx-auto max-w-7xl">
       <div class="p-6">
+        <div
+          v-if="jobs.length > 0"
+          class="flex flex-wrap items-center justify-between gap-4 mb-6"
+        >
+          <div class="flex-1 min-w-0" />
+          <button
+            type="button"
+            :disabled="launchingAllJobs"
+            class="flex items-center px-5 py-2.5 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
+            :class="{ 'animate-pulse': launchingAllJobs }"
+            @click="launchAllModalOpened = true"
+          >
+            <svg
+              v-if="!launchingAllJobs"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-4 h-4 mr-2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z"
+              />
+            </svg>
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-4 h-4 mr-2 animate-spin"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+              />
+            </svg>
+            {{ launchingAllJobs ? "Launching…" : "Launch all jobs" }}
+          </button>
+        </div>
+
         <div v-if="jobs.length === 0" class="flex w-full text-3xl text-center">
           <div class="justify-center">No job found.</div>
         </div>
@@ -279,6 +325,71 @@
       </div>
     </div>
 
+    <div
+      v-if="launchAllModalOpened"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      tabindex="0"
+      @click.self="launchAllModalOpened = false"
+      @keydown.escape="launchAllModalOpened = false"
+    >
+      <div
+        class="relative w-full max-w-md p-6 mx-4 bg-white border border-gray-200 shadow-2xl dark:bg-gray-900 rounded-3xl dark:border-gray-700"
+      >
+        <div
+          class="flex items-center justify-between pb-4 border-b border-gray-200 border-dashed dark:border-gray-700"
+        >
+          <h2 class="text-2xl text-gray-900 font-handwriting dark:text-white">
+            Launch all jobs
+          </h2>
+          <button
+            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+            :disabled="launchingAllJobs"
+            @click="launchAllModalOpened = false"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <p class="mt-4 text-gray-700 dark:text-gray-300 font-handwriting">
+          Are you sure you want to queue all
+          <strong>{{ uniqueJobTitles.length }}</strong>
+          job(s)? They will be added to the queue and run one after another.
+        </p>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            type="button"
+            class="px-4 py-2 text-gray-700 transition-colors duration-200 bg-gray-100 border border-gray-300 font-handwriting dark:text-gray-200 dark:bg-gray-800/80 dark:border-gray-600 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700/80"
+            :disabled="launchingAllJobs"
+            @click="launchAllModalOpened = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 text-white transition-all duration-200 transform bg-black border border-gray-300 shadow-lg font-handwriting dark:text-black dark:bg-white rounded-2xl hover:bg-gray-800 dark:hover:bg-gray-200 hover:shadow-xl hover:scale-105 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="launchingAllJobs"
+            @click="confirmLaunchAllJobs"
+          >
+            {{ launchingAllJobs ? "Launching…" : "Launch all" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <JobResultModal
       v-if="selectedJobIdToShowLogs"
       :job-id="selectedJobIdToShowLogs"
@@ -306,6 +417,55 @@ const jobs = ref<Array<ExternalJob>>([]);
 const jobMetadata = ref({});
 const jobsCount = ref(0);
 const selectedJobIdToShowLogs = ref("");
+const launchAllModalOpened = ref(false);
+const launchingAllJobs = ref(false);
+
+const uniqueJobTitles = computed(() => {
+  const titles = jobs.value.map(j => j.title).filter(Boolean) as string[];
+  return [...new Set(titles)];
+});
+
+const { notify } = useNotification();
+
+const confirmLaunchAllJobs = async () => {
+  launchingAllJobs.value = true;
+  const titles = uniqueJobTitles.value;
+  let successCount = 0;
+  let failCount = 0;
+
+  try {
+    for (const title of titles) {
+      try {
+        await fetch(`${config.public.apiEndpoint}/jobs/queue`, {
+          credentials: "include",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        });
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    await refreshJobs();
+    launchAllModalOpened.value = false;
+    if (failCount === 0) {
+      notify({
+        title: "All jobs queued",
+        type: "success",
+        text: `${successCount} job(s) added to the queue.`,
+      });
+    } else {
+      notify({
+        title: "Launch completed with errors",
+        type: "warning",
+        text: `${successCount} queued, ${failCount} failed.`,
+      });
+    }
+  } finally {
+    launchingAllJobs.value = false;
+  }
+};
 
 const showLogsForTheJobId = (result: string) => {
   selectedJobIdToShowLogs.value = result;
