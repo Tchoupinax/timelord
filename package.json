@@ -1,5 +1,6 @@
 {
   "name": "toto",
+  "version": "1.0.3",
   "private": true,
   "scripts": {
     "up": "docker compose up -d && scripts/vault-setup.sh",
