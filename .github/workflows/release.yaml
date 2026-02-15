@@ -160,25 +160,5 @@ jobs:
     name: "🔵 Build agent binary"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - id: vars
-        run: |
-          cd agent
-          echo "go_version=$(cat go.mod | head -3 | tail -1 | cut -d ' ' -f 2)" >> $GITHUB_OUTPUT
-          echo "Use Golang version $(cat go.mod | head -3 | tail -1 | cut -d ' ' -f 2)"
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ steps.vars.outputs.go_version }}
-
-      - name: Compile the source
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          args: release --clean
-          version: "~> v2"
-          workdir: agent
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check build success 🦫
+        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@v0.1.0
