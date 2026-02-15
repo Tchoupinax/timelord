@@ -95,6 +95,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check build success 🦫
-        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@3e6c2f2dcd327d91e18b73316c81a602006316fb
+        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@a8427e2bdc08342b9dccb183853fc923a1b0e7a3
         with:
           workingDirectory: agent
