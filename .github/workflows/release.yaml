@@ -157,8 +157,8 @@ jobs:
             CI_PIPELINE_CREATED=111111111
 
   build-agent:
-    name: "🔵 Build agent binary2"
+    name: "🔵 Build agent binary"
     runs-on: ubuntu-latest
     steps:
       - name: Check build success 🦫
-        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@v0.1.0
+        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@v0.1.0
