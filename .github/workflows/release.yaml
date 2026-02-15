@@ -157,7 +157,7 @@ jobs:
             CI_PIPELINE_CREATED=111111111
 
   build-agent:
-    name: "🔵 Build agent binary"
+    name: "🔵 Build agent binary2"
     runs-on: ubuntu-latest
     steps:
       - name: Check build success 🦫
