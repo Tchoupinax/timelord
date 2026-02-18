@@ -77,7 +77,7 @@
         No secrets found
       </h3>
       <p
-        class="max-w-sm text-center text-gray-600 dark:text-gray-300 font-handwriting"
+        class="max-w-sm text-center text-neutral-600 dark:text-gray-300 font-handwriting"
       >
         Get started by creating your first secret to securely store sensitive
         information.

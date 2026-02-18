@@ -114,6 +114,6 @@ const showResult = result => {
 
 <style scoped>
 .row {
-  @apply dark:bg-primary-dark dark:text-primary-light px-4 py-2 text-gray-600 flex items-center;
+  @apply dark:bg-primary-dark dark:text-primary-light px-4 py-2 text-neutral-600 flex items-center;
 }
 </style>

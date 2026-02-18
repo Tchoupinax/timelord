@@ -37,7 +37,7 @@
                 </h3>
               </div>
               <p
-                class="text-sm text-gray-600 dark:text-gray-300 font-handwriting"
+                class="text-sm text-neutral-600 dark:text-gray-300 font-handwriting"
               >
                 Orchestrate your CRONs easily
               </p>
@@ -85,7 +85,7 @@
               </h4>
 
               <div
-                class="space-y-2 text-sm text-gray-600 dark:text-gray-300 font-handwriting"
+                class="space-y-2 text-sm text-neutral-600 dark:text-gray-300 font-handwriting"
               >
                 <div v-if="nickname" class="flex items-center space-x-2">
                   <span>👤</span>
@@ -171,7 +171,7 @@
                 ></div>
               </div>
               <span
-                class="text-sm text-gray-600 dark:text-gray-300 font-handwriting"
+                class="text-sm text-neutral-600 dark:text-gray-300 font-handwriting"
               >
                 System online
               </span>

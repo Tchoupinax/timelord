@@ -78,7 +78,7 @@
         No agents found
       </h3>
       <p
-        class="text-gray-600 dark:text-gray-300 text-center max-w-sm font-handwriting"
+        class="text-neutral-600 dark:text-gray-300 text-center max-w-sm font-handwriting"
       >
         Get started by creating your first agent to begin managing your
         infrastructure.

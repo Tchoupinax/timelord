@@ -6,8 +6,8 @@ export default defineNuxtConfig({
   modules: [
     "@nuxt/eslint",
     "@nuxtjs/color-mode",
-    "@nuxtjs/tailwindcss",
     "nuxt3-notifications",
+    "@nuxtjs/tailwindcss",
   ],
   devtools: { enabled: true },
   sourcemap: true,

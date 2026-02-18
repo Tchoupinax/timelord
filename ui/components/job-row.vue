@@ -53,7 +53,7 @@
     </div>
 
     <div class="col-span-2 hidden xl:flex items-center">
-      <span class="text-sm text-gray-600 dark:text-gray-400">{{
+      <span class="text-sm text-neutral-600 dark:text-gray-400">{{
         job.hostname
       }}</span>
     </div>
@@ -61,14 +61,14 @@
     <div class="col-span-2 flex items-center">
       <div
         v-tippy="{ content: job.createdAt }"
-        class="text-sm text-gray-600 dark:text-gray-400"
+        class="text-sm text-neutral-600 dark:text-gray-400"
       >
         {{ format(job.createdAt) }}
       </div>
     </div>
 
     <div class="col-span-2 hidden xl:flex items-center">
-      <span class="text-sm text-gray-600 dark:text-gray-400 font-mono">{{
+      <span class="text-sm text-neutral-600 dark:text-gray-400 font-mono">{{
         job.cron
       }}</span>
     </div>
@@ -124,7 +124,7 @@
 
     <div class="col-span-1 flex items-center">
       <div class="flex items-center space-x-2">
-        <span class="text-sm text-gray-600 dark:text-gray-400">{{
+        <span class="text-sm text-neutral-600 dark:text-gray-400">{{
           job.logsCount
         }}</span>
         <svg
@@ -190,9 +190,9 @@ const putJobInQueue = async (title: string) => {
 
 <style scoped>
 .row {
-  @apply table-cell dark:bg-primary-dark dark:text-primary-light px-4 py-2 text-gray-600 items-center;
+  @apply table-cell dark:bg-primary-dark dark:text-primary-light px-4 py-2 text-neutral-600 items-center;
 }
 .hidden-row {
-  @apply hidden px-4 py-2 text-gray-600 xl:table-cell dark:bg-primary-dark dark:text-primary-light;
+  @apply hidden px-4 py-2 text-neutral-600 xl:table-cell dark:bg-primary-dark dark:text-primary-light;
 }
 </style>

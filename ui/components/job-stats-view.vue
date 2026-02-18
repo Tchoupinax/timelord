@@ -204,7 +204,7 @@
             />
           </svg>
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400 font-handwriting">
+        <p class="text-sm text-neutral-600 dark:text-gray-400 font-handwriting">
           No executions yet
         </p>
       </div>
