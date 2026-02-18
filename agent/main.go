@@ -24,8 +24,8 @@ func main() {
 		apiUrl = "http://localhost:9988"
 	}
 
-	go heartbeat(apiUrl)
 	go processJob(apiUrl)
+	go heartbeat(apiUrl)
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
