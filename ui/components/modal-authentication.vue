@@ -55,7 +55,9 @@
         <div
           class="pt-6 mt-8 border-t border-dashed border-gray-200 dark:border-gray-700"
         >
-          <p class="text-sm text-gray-600 dark:text-gray-400 font-handwriting">
+          <p
+            class="text-sm text-neutral-600 dark:text-gray-400 font-handwriting"
+          >
             Secure authentication powered by Authelia
           </p>
         </div>

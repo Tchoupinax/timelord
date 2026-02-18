@@ -1,13 +1,22 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+// https://github.com/nuxt/ui/issues/809
+import { createRequire } from "node:module";
+const _require = createRequire(import.meta.url);
+const defaultColors = _require("tailwindcss/colors.js");
+delete defaultColors.lightBlue;
+delete defaultColors.warmGray;
+delete defaultColors.trueGray;
+delete defaultColors.coolGray;
+delete defaultColors.blueGray;
 
+// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: false,
   compatibilityDate: "2024-11-01",
   modules: [
     "@nuxt/eslint",
     "@nuxtjs/color-mode",
-    "@nuxtjs/tailwindcss",
     "nuxt3-notifications",
+    "@nuxtjs/tailwindcss",
   ],
   devtools: { enabled: true },
   sourcemap: true,

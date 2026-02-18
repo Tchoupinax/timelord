@@ -11,7 +11,7 @@
       >
         <h3 class="text-lg font-bold dark:text-gray-200">Job logs</h3>
         <button
-          class="text-gray-600 transition-colors duration-200 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
+          class="text-neutral-600 transition-colors duration-200 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
           @click="$emit('close')"
         >
           Close

@@ -200,7 +200,7 @@
             Create New Agent
           </h2>
           <button
-            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-neutral-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
             @click="agentCreationModalOpened = false"
           >
             <svg
@@ -342,7 +342,7 @@
             Launch all jobs
           </h2>
           <button
-            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-neutral-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
             :disabled="launchingAllJobs"
             @click="launchAllModalOpened = false"
           >

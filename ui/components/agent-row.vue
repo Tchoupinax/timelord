@@ -123,6 +123,6 @@ const confirmDelete = () => {
 
 <style scoped>
 .row {
-  @apply dark:bg-primary-dark dark:text-primary-light px-4 py-2 text-gray-600;
+  @apply dark:bg-primary-dark dark:text-primary-light px-4 py-2;
 }
 </style>
