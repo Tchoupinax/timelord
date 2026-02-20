@@ -199,8 +199,8 @@ importers:
         specifier: 0.3.2
         version: 0.3.2(magicast@0.5.2)
       nuxt3-notifications:
-        specifier: 1.3.1
-        version: 1.3.1(@nuxt/kit@4.3.1(magicast@0.5.2))(vue@3.5.28(typescript@5.9.3))
+        specifier: 1.4.0
+        version: 1.4.0(@nuxt/kit@4.3.1(magicast@0.5.2))(vue@3.5.28(typescript@5.9.3))
       prismjs:
         specifier: 1.30.0
         version: 1.30.0
@@ -7581,8 +7581,8 @@ packages:
   nuxt-shiki@0.3.2:
     resolution: {integrity: sha512-mBl5N1msD3k9hhekh71sDemGY+aKq76cxMaI1DvNj+2rvKAmGICBLhMcmFLDl8mvi7oFDA5Gi0CLrEm1oXwjCw==}
 
-  nuxt3-notifications@1.3.1:
-    resolution: {integrity: sha512-r5gSyvHrf20xzb3j5DIrz3DZpaRcaLzjI9Sf8J2DvCugtgslnKQwCH/KKAOKKIqyeujhCWwrAk9LhcG+//uq8g==}
+  nuxt3-notifications@1.4.0:
+    resolution: {integrity: sha512-bLFGJGu6LWzuCAazLaa0AuYQ07r+h5lalO5I5qNnyje0TZ9/fIzlQoS7/X58TuYbbmQa0lxtBSP2qPhaK0xYnQ==}
     engines: {node: '>= 14.20.0'}
     peerDependencies:
       '@nuxt/kit': ^3.0.0
@@ -19804,7 +19804,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  nuxt3-notifications@1.3.1(@nuxt/kit@4.3.1(magicast@0.5.2))(vue@3.5.28(typescript@5.9.3)):
+  nuxt3-notifications@1.4.0(@nuxt/kit@4.3.1(magicast@0.5.2))(vue@3.5.28(typescript@5.9.3)):
     dependencies:
       '@kyvg/vue3-notification': 3.4.2(vue@3.5.28(typescript@5.9.3))
       '@nuxt/kit': 4.3.1(magicast@0.5.2)
