@@ -44,5 +44,5 @@
     "eslint-plugin-typescript-sort-keys": "3.3.0",
     "vue-tsc": "3.2.4"
   },
-  "packageManager": "pnpm@10.30.0"
+  "packageManager": "pnpm@10.30.1"
 }
