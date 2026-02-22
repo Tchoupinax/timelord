@@ -26,5 +26,12 @@
     "target": "ES2022",
     "typeRoots": ["#types", "node_modules/@types"]
   },
-  "include": ["scripts", "src", "test", "tests"]
+  "include": [
+    "prisma.config.mts",
+    "prisma/seed.mts",
+    "scripts",
+    "src",
+    "test",
+    "tests",
+  ]
 }

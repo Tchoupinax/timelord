@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
+
 import axios from "axios";
-import { randomUUID } from "crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { prisma } from "../../../src/prisma-client.mts";

@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 
+import { type GitConfig } from "#prisma";
+
 import axios from "axios";
 import { beforeAll, describe, expect, it } from "vitest";
 
-import { type GitConfig } from "#prisma";
 import { prisma } from "../../../src/prisma-client.mts";
 import { TEST_USER_ID } from "../../config/constants.mts";
 import { generateGitConfig } from "../../entities/git-config.mts";

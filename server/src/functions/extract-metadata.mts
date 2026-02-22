@@ -34,7 +34,10 @@ export function extractMetadata(file: string): Metadata {
   }
 
   function capitalizeFirstLetter(str: string): string {
-    if (!str) return "";
+    if (!str) {
+      return "";
+    }
+
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 

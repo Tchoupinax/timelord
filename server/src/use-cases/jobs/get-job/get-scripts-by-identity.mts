@@ -1,7 +1,8 @@
+import type { GitConfig } from "#prisma";
+
 import fs from "fs";
 import path from "path";
 
-import type { GitConfig } from "#prisma";
 import { env } from "../../../tools/env.mts";
 
 export function getSriptsByIdentity(

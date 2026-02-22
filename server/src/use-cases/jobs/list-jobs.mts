@@ -1,4 +1,7 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+
+import { type Job } from "#prisma";
+
 import { FastifyReply, FastifyRequest } from "fastify";
 import fs from "fs";
 import path from "path";
@@ -7,7 +10,6 @@ import { extractMetadata } from "../../functions/extract-metadata.mts";
 import { prisma } from "../../prisma-client.mts";
 import { getHumanStore } from "../../store.mts";
 import { env } from "../../tools/env.mts";
-import { type Job } from "#prisma";
 
 type ExternalJob = Job & {
   neverExecuted: boolean;

@@ -9,13 +9,13 @@ import {
 
 const stringWithDefault =
   (defaultValue: string): Validator<string> =>
-  value =>
-    string(value) ?? defaultValue;
+    value =>
+      string(value) ?? defaultValue;
 
 const booleanWithDefault =
   (defaultValue: boolean): Validator<boolean> =>
-  value =>
-    boolean(value) ?? defaultValue;
+    value =>
+      boolean(value) ?? defaultValue;
 
 const fake = {
   API_URL: "test_fake",

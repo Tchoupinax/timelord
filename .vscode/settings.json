@@ -1,4 +1,28 @@
 {
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "kennylong.kubernetes-yaml-formatter",
+    "editor.formatOnSave": true
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "never"
+  },
+  "eslint.format.enable": true,
+  "yaml.format.singleQuote": false,
+  "yaml.format.bracketSpacing": false,
+
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#fffddd",
     "activityBar.background": "#fffddd",
@@ -18,20 +42,5 @@
     "titleBar.inactiveBackground": "#fffbaa99",
     "titleBar.inactiveForeground": "#15202b99"
   },
-  "peacock.color": "#FFFBAA",
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[typescript]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "eslint.ignoreUntitled": true,
-  "eslint.validate": ["javascript", "typescript"],
-  "eslint.format.enable": true,
-  "eslint.run": "onSave"
+  "peacock.color": "#FFFBAA"
 }
