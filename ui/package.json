@@ -34,7 +34,7 @@
     "@types/node": "25.3.0",
     "@typescript-eslint/parser": "8.56.0",
     "eslint": "10.0.1",
-    "eslint-config-tchoupinax": "2.2.0",
+    "eslint-config-tchoupinax": "2.4.0",
     "vue-tsc": "3.2.5"
   },
   "packageManager": "pnpm@10.30.1"
