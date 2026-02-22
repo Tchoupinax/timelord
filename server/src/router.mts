@@ -18,6 +18,7 @@ import { addGitConfig } from "./use-cases/git-config/add-git-config.mts";
 import { listGitConfigs } from "./use-cases/git-config/list-git-config.mts";
 import { refreshGitConfig } from "./use-cases/git-config/refresh-git-config.mts";
 import { addJobToQueue } from "./use-cases/jobs/add-job-to-queue.mts";
+import { clearJobQueue } from "./use-cases/jobs/clear-job-queue.mts";
 import { getJob } from "./use-cases/jobs/get-job/index.mts";
 import { getJobAssets } from "./use-cases/jobs/get-job-assets.mts";
 import { listJobs } from "./use-cases/jobs/list-jobs.mts";
@@ -133,6 +134,7 @@ export function router(fastify: FastifyInstance) {
     fastify.post("/git-configs", addGitConfig);
     fastify.post("/git-configs/refresh", refreshGitConfig);
     fastify.post("/jobs/queue", addJobToQueue);
+    fastify.delete("/jobs/queue", clearJobQueue);
     fastify.post("/secrets", createSecret);
   });
 
