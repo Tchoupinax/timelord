@@ -14,6 +14,7 @@ describe("Extract metadata", () => {
     expect(extractMetadata(file)).toEqual({
       cron: "55 15 * * *",
       cronIsActive: false,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       nextDate: expect.any(String),
       title: "",
       keepLastCount: -1,

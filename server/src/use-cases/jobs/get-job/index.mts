@@ -1,4 +1,7 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+
+import type { GitConfig } from "#prisma";
+
 import fs from "fs";
 
 import { extractMetadata } from "../../../functions/extract-metadata.mts";
@@ -7,7 +10,6 @@ import { prisma } from "../../../prisma-client.mts";
 import { getRobotStore } from "../../../store.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
-import type { GitConfig } from "#prisma";
 
 export async function getJob() {
   const store = getRobotStore();

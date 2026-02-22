@@ -1,10 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { requestContext } from "@fastify/request-context";
 
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../logger.mts";
 import { env } from "../tools/env.mts";
-import { randomUUID } from "node:crypto";
 
 // ⚠️ DO NOT REMOVE async, fastify uses signature to adapt its behavior
 // eslint-disable-next-line @typescript-eslint/require-await
