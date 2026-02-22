@@ -162,3 +162,7 @@ jobs:
     steps:
     - name: Check build success 🦫
       uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@v0
+      with:
+        workingDirectory: agent
+        appId: ${{ secrets.DEPLOY_APP_ID }}
+        privateKey: ${{ secrets.DEPLOY_APP_KEY }}
