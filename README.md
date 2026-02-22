@@ -10,7 +10,8 @@
 ## Agent installation
 
 ```bash
-curl -o- -s https://raw.githubusercontent.com/Tchoupinax/timelord/refs/heads/master/scripts/timelord-agent-installation.sh| bash
+curl -o- -s https://raw.githubusercontent.com/Tchoupinax/timelord/refs/heads/master/scripts/timelord-agent-installation.sh \
+  | bash -s -- <token> https://my.domain.com/api
 ```
 
 ## Table of content
