@@ -10,10 +10,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint": "pnpm lint:vue:check && pnpm lint:eslint",
-    "lint:eslint": "eslint . --ignore-pattern 'public/*'",
-    "lint:fix": "eslint . --fix --ignore-pattern 'public/*'",
-    "lint:inspect": "npx @eslint/config-inspector@latest",
+    "lint": "eslint --fix . && pnpm lint:vue:check",
     "lint:vue:check": "vue-tsc --noEmit"
   },
   "dependencies": {
@@ -38,7 +35,7 @@
     "@typescript-eslint/parser": "8.56.0",
     "eslint": "10.0.1",
     "eslint-config-prettier": "10.1.8",
-    "eslint-config-tchoupinax": "1.1.0",
+    "eslint-config-tchoupinax": "2.2.0",
     "eslint-plugin-perfectionist": "5.6.0",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-typescript-sort-keys": "3.3.0",
