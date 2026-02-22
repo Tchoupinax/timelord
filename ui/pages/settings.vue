@@ -148,7 +148,9 @@
 
     <main class="px-6 py-8 mx-auto max-w-7xl">
       <div class="p-6">
-        <h2 class="mb-8 text-2xl text-gray-900 font-handwriting dark:text-white">
+        <h2
+          class="mb-8 text-2xl text-gray-900 font-handwriting dark:text-white"
+        >
           Settings
         </h2>
 
@@ -303,7 +305,10 @@ const confirmCleanQueues = async () => {
     notify({
       title: "Queues cleared",
       type: "success",
-      text: data?.clearedCount != null ? `${data.clearedCount} job(s) removed` : "Done",
+      text:
+        data?.clearedCount != null
+          ? `${data.clearedCount} job(s) removed`
+          : "Done",
     });
   } catch (err) {
     notify({
