@@ -3,7 +3,7 @@ name: Releasing
 on:
   push:
     tags:
-      - v*
+    - v*
 
 permissions:
   contents: write
@@ -14,151 +14,151 @@ jobs:
     name: "🟢 Release user interface 🐳"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    - name: Checkout
+      uses: actions/checkout@v6
 
-      - name: "Setup PNPM"
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-        with:
-          version: 10.30.1
+    - name: "Setup PNPM"
+      uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      with:
+        version: 10.30.1
 
-      - name: Use Node.js 25
-        uses: actions/setup-node@v6
-        with:
-          node-version: 25
-          cache: "pnpm"
+    - name: Use Node.js 25
+      uses: actions/setup-node@v6
+      with:
+        node-version: 25
+        cache: "pnpm"
 
-      - name: Build, lint and test the package
-        run: |
-          pnpm install --frozen-lockfile --filter timelord-ui
-          pnpm build --filter timelord-ui
+    - name: Build, lint and test the package
+      run: |
+        pnpm install --frozen-lockfile --filter timelord-ui
+        pnpm build --filter timelord-ui
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Build
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/tchoupinax/timelord-ui
-            tchoupinax/timelord-ui
-          flavor: latest=true
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{raw}}
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: "./ui"
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-ui
+          tchoupinax/timelord-ui
+        flavor: latest=true
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{raw}}
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: "./ui"
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
 
   build-server:
     name: "🟣 Release server 🐳"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    - name: Checkout
+      uses: actions/checkout@v6
 
-      - name: "Setup PNPM"
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
-        with:
-          version: 10.30.1
+    - name: "Setup PNPM"
+      uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      with:
+        version: 10.30.1
 
-      - name: Use Node.js 24
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
+    - name: Use Node.js 24
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+        cache: "pnpm"
 
-      - name: Build, lint and test the package
-        run: |
-          pnpm install --frozen-lockfile --filter timelord-server
-          cd server && npx prisma generate && pnpm build
-        env:
-          API_URL: "_"
-          CI_COMMIT_SHA: "_"
-          CI_PIPELINE_CREATED: "1"
-          DATABASE_URL: "_"
-          JOB_DEFAULT_TIMEOUT: "_"
-          OIDC_CLIENT_ID: "_"
-          OIDC_CLIENT_SECRET: "_"
-          OIDC_CONFIGURATION_URL: "_"
-          OIDC_PROVIDER_IMAGE: "_"
-          OIDC_PROVIDER_NAME: "_"
-          UI_URL: "_"
-          VAULT_ADDR: "_"
-          VAULT_PATH: "_"
-          VAULT_TOKEN: "_"
+    - name: Build, lint and test the package
+      run: |
+        pnpm install --frozen-lockfile --filter timelord-server
+        cd server && npx prisma generate && pnpm build
+      env:
+        API_URL: "_"
+        CI_COMMIT_SHA: "_"
+        CI_PIPELINE_CREATED: "1"
+        DATABASE_URL: "_"
+        JOB_DEFAULT_TIMEOUT: "_"
+        OIDC_CLIENT_ID: "_"
+        OIDC_CLIENT_SECRET: "_"
+        OIDC_CONFIGURATION_URL: "_"
+        OIDC_PROVIDER_IMAGE: "_"
+        OIDC_PROVIDER_NAME: "_"
+        UI_URL: "_"
+        VAULT_ADDR: "_"
+        VAULT_PATH: "_"
+        VAULT_TOKEN: "_"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Build
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/tchoupinax/timelord-server
-            tchoupinax/timelord-server
-          flavor: latest=true
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{raw}}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-server
+          tchoupinax/timelord-server
+        flavor: latest=true
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{raw}}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: "."
-          file: "./server/Dockerfile"
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            CI_COMMIT_SHA=${{ github.ref_name }}
-            CI_PIPELINE_CREATED=111111111
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: "."
+        file: "./server/Dockerfile"
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        build-args: |
+          CI_COMMIT_SHA=${{ github.ref_name }}
+          CI_PIPELINE_CREATED=111111111
 
   build-agent:
     name: "🔵 Build agent binary"
     runs-on: ubuntu-latest
     steps:
-      - name: Check build success 🦫
-        uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@v0.2.0
+    - name: Check build success 🦫
+      uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@v0
