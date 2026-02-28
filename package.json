@@ -7,7 +7,7 @@
     "prewatch": "pnpm run up",
     "watch": "turbo run watch",
     "test": "turbo run test",
-    "lint": "prettier -w . && turbo run lint",
+    "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "knip": "knip",
     "upgrade": "npx ncu -i -w",
@@ -16,7 +16,6 @@
   "devDependencies": {
     "knip": "5.85.0",
     "npm-check-updates": "19.6.3",
-    "prettier": "3.8.1",
     "turbo": "2.8.12"
   },
   "packageManager": "pnpm@10.30.3"
