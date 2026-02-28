@@ -94,7 +94,7 @@ jobs:
     - name: Build, lint and test the package
       run: |
         pnpm install --frozen-lockfile --filter timelord-server
-        cd server && npx prisma generate && pnpm build
+        cd server && pnpm build:ci
       env:
         API_URL: "_"
         CI_COMMIT_SHA: "_"
