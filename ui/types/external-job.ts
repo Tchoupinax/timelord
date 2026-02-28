@@ -12,4 +12,5 @@ export type ExternalJob = {
   neverExecuted: boolean;
   queuePending: boolean;
   keepLastCount: number;
+  finalState: string;
 };
