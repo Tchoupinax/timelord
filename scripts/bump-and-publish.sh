@@ -11,7 +11,7 @@ else
     echo "error: latest tag '$LATEST_TAG' is not semver (expected major.minor.patch)" >&2
     exit 1
   fi
-  
+
   IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
   PATCH=$((PATCH + 1))
   NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
