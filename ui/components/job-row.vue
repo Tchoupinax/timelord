@@ -1,11 +1,11 @@
 <template>
   <div
-    class="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-200"
+    class="grid grid-cols-12 gap-4 px-6 py-4 transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/30"
   >
-    <div class="col-span-3 flex items-center">
+    <div class="flex items-center col-span-3">
       <div class="flex items-center space-x-3">
         <div
-          class="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-800/30 rounded-lg"
+          class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg dark:bg-gray-800/30"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -23,13 +23,13 @@
           </svg>
         </div>
         <div class="flex items-center space-x-2">
-          <span class="font-medium text-gray-900 dark:text-white truncate">{{
+          <span class="font-medium text-gray-900 truncate dark:text-white">{{
             job.title
           }}</span>
           <div class="flex items-center">
             <div
               v-if="job.statusCode === 0 || !job.statusCode"
-              class="w-2 h-2 bg-gray-700 dark:bg-gray-300 rounded-full"
+              class="w-2 h-2 bg-gray-700 rounded-full dark:bg-gray-300"
               title="Success"
             ></div>
             <div
@@ -38,13 +38,13 @@
                 content:
                   job.statusComment ?? `Exited with code ${job.statusCode}`,
               }"
-              class="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full cursor-pointer"
+              class="w-2 h-2 bg-gray-400 rounded-full cursor-pointer dark:bg-gray-500"
               title="Failed"
             ></div>
             <div
               v-else
               v-tippy="{ content: `Job in progress` }"
-              class="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full cursor-pointer animate-pulse"
+              class="w-2 h-2 bg-gray-400 rounded-full cursor-pointer dark:bg-gray-500 animate-pulse"
               title="Running"
             ></div>
           </div>
@@ -52,13 +52,13 @@
       </div>
     </div>
 
-    <div class="col-span-2 hidden xl:flex items-center">
+    <div class="items-center hidden col-span-2 xl:flex">
       <span class="text-sm text-neutral-600 dark:text-gray-400">{{
         job.hostname
       }}</span>
     </div>
 
-    <div class="col-span-2 flex items-center">
+    <div class="flex items-center col-span-2">
       <div
         v-tippy="{ content: job.createdAt }"
         class="text-sm text-neutral-600 dark:text-gray-400"
@@ -67,13 +67,13 @@
       </div>
     </div>
 
-    <div class="col-span-2 hidden xl:flex items-center">
-      <span class="text-sm text-neutral-600 dark:text-gray-400 font-mono">{{
+    <div class="items-center hidden col-span-2 xl:flex">
+      <span class="font-mono text-sm text-neutral-600 dark:text-gray-400">{{
         job.cron
       }}</span>
     </div>
 
-    <div class="col-span-2 hidden xl:flex items-center space-x-2">
+    <div class="items-center hidden col-span-2 space-x-2 xl:flex">
       <button
         class="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors duration-200"
         @click="viewResult"
@@ -101,7 +101,7 @@
       </button>
 
       <button
-        class="flex items-center justify-center w-8 h-8 text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800/20 rounded-lg transition-colors duration-200"
+        class="flex items-center justify-center w-8 h-8 text-gray-700 transition-colors duration-200 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800/20"
         title="Requeue job"
         @click="putJobInQueue(job.title)"
       >
@@ -122,7 +122,7 @@
       </button>
     </div>
 
-    <div class="col-span-1 flex items-center">
+    <div class="flex items-center col-span-1">
       <div class="flex items-center space-x-2">
         <span class="text-sm text-neutral-600 dark:text-gray-400">{{
           job.logsCount
