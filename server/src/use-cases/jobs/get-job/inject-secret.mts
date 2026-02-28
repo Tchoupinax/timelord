@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import vault from "node-vault";
 
 import { logger } from "../../../logger.mts";
@@ -41,7 +44,7 @@ async function replacementFunction(match: string) {
   const store = getRobotStore();
 
   const secretKey = match.replace("$${", "").replace("}", "");
-  let secret: string | null = "";
+  let secret: string | null = null;
 
   if (env.VAULT_ADDR && env.VAULT_TOKEN) {
     logger.info("Getting secret from Vault is accepted");
@@ -50,7 +53,6 @@ async function replacementFunction(match: string) {
       const vaultClient = vault(options);
       secret = await vaultClient
         .read(env.VAULT_PATH)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         .then(secret => secret.data.data?.[secretKey]);
     } catch (err) {
       logger.error(err);
@@ -125,19 +127,19 @@ async function findSecretInLine(
       const vaultClient = vault(options);
       const secrets = await vaultClient
         .read(env.VAULT_PATH)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         .then(data => data.data.data);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const secretName = Object.keys(secrets).filter(name =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         value.includes(secrets[name]),
       )[0];
 
       if (secretName) {
         return {
           name: secretName,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
           value: secrets[secretName],
         };
       }

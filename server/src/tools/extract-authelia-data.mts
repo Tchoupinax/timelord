@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 type AutheliaData = {
   email: string;
   groups: Array<string>;
