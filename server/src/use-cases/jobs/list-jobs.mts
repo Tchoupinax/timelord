@@ -96,6 +96,7 @@ export async function listJobs(
       userId: "",
       neverExecuted: true,
       keepLastCount: metadata.keepLastCount ?? 0,
+      finalState: null,
     } satisfies ExternalJob;
   });
 

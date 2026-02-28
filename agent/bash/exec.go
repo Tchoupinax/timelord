@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -21,7 +22,14 @@ func check(e error) {
 }
 
 type ExecResult struct {
-	Status int
+	Status     int
+	FinalState string // Success, Warning, or Error from TIMELORD_OUTPUT_STATE
+}
+
+var allowedFinalStates = map[string]bool{
+	"Success": true,
+  "Warning": true,
+  "Error": true,
 }
 
 func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
@@ -34,7 +42,10 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 		fmt.Println(err)
 	}
 
-	cmd := exec.Command("/bin/bash", "-c", bashScript)
+	stateFilePath := executionPath + "/.timelord_final_state"
+	// Wrap script so TIMELORD_OUTPUT_STATE is written at end (same shell)
+	wrappedScript := "(" + bashScript + ")\nprintf '%s' \"${TIMELORD_OUTPUT_STATE:-}\" > \"" + stateFilePath + "\""
+	cmd := exec.Command("/bin/bash", "-c", wrappedScript)
 	cmd.Dir = executionPath
 	stdout, err := cmd.StdoutPipe()
 	check(err)
@@ -56,6 +67,8 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 
 	// Wait for the command to finish
 	err = cmd.Wait()
+	finalState := readFinalState(stateFilePath)
+
 	if err != nil {
 		// Check if it's an ExitError (non-zero exit code)
 		if exitError, ok := err.(*exec.ExitError); ok {
@@ -64,25 +77,41 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 				fmt.Printf("Script exited with code: %d\n", status.ExitStatus())
 
 				return ExecResult{
-					Status: status.ExitStatus(),
+					Status:     status.ExitStatus(),
+					FinalState: finalState,
 				}
 			}
 
 			return ExecResult{
-				Status: 1,
+				Status:     1,
+				FinalState: finalState,
 			}
 		} else {
 			fmt.Printf("Error waiting for script: %v\n", err)
 			return ExecResult{
-				Status: 1,
+				Status:     1,
+				FinalState: finalState,
 			}
 		}
 	} else {
 		log.Info().Msg("✅ Script executed with success")
 		return ExecResult{
-			Status: 0,
+			Status:     0,
+			FinalState: finalState,
 		}
 	}
+}
+
+func readFinalState(path string) string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	s := strings.TrimSpace(string(b))
+	if allowedFinalStates[s] {
+		return s
+	}
+	return ""
 }
 
 func streamOutputToWebSocket(pipe io.ReadCloser, wg *sync.WaitGroup, prefix string, apiUrl string, data *api.ResponseData, logIndex *int) {

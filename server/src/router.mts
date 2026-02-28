@@ -90,18 +90,33 @@ export function router(fastify: FastifyInstance) {
     fastify.post(
       "/job",
       async (
-        request: FastifyRequest<{ Body: { id: string; statusCode: number } }>,
+        request: FastifyRequest<{
+          Body: {
+            id: string;
+            statusCode: number;
+            finalState?: string;
+          };
+        }>,
       ) => {
         const body = request.body;
 
         if (body.id) {
+          const data: { statusCode: number; finalState?: string } = {
+            statusCode: body.statusCode,
+          };
+
+          if (
+            body.finalState &&
+            ["Success", "Warning", "Error"].includes(body.finalState)
+          ) {
+            data.finalState = body.finalState;
+          }
+
           await prisma.job.update({
             where: {
               id: body.id,
             },
-            data: {
-              statusCode: body.statusCode,
-            },
+            data,
           });
         }
 

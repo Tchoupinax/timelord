@@ -13,6 +13,10 @@ function buildDatabaseUrl(): string {
     return `postgresql://${username}:${password}@${hostname}:${port}/${database}`;
   }
 
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
   return "_";
 }
 

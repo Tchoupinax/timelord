@@ -23,6 +23,7 @@ model Job {
   userId               String?  @map("user_id")
   statusComment        String? @map("status_comment") /// Provide custom comment about the end status of the job
   nextPlannedExecution String? @map("next_planned_execution") /// String date when the next execution was planned. Used to detect duplicate
+  finalState           String? @map("final_state") /// Script-reported state: Success, Warning, Error (from TIMELORD_OUTPUT_STATE)
 
   @@map("jobs")
 }

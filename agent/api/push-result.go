@@ -9,10 +9,14 @@ func PushResult(
 	url string,
 	res *ResponseData,
 	status int,
+	finalState string,
 ) {
 	payload := map[string]any{
 		"id":         res.Id,
 		"statusCode": status,
+	}
+	if finalState != "" {
+		payload["finalState"] = finalState
 	}
 
 	jsonData, _ := json.Marshal(payload)
