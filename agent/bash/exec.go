@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Tchoupinax/timelord/agent/api"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -23,7 +24,7 @@ func check(e error) {
 
 type ExecResult struct {
 	Status     int
-	FinalState string // Success, Warning, or Error from TIMELORD_OUTPUT_STATE
+	FinalState string // Success, Warning, or Error from TIMELORD_STATE
 }
 
 var allowedFinalStates = map[string]bool{
@@ -42,10 +43,10 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 		fmt.Println(err)
 	}
 
-	stateFilePath := executionPath + "/.timelord_final_state"
-	// Wrap script so TIMELORD_OUTPUT_STATE is written at end (same shell)
-	wrappedScript := "(" + bashScript + ")\nprintf '%s' \"${TIMELORD_OUTPUT_STATE:-}\" > \"" + stateFilePath + "\""
-	cmd := exec.Command("/bin/bash", "-c", wrappedScript)
+	stateFilePath := executionPath + "/" + "timelord-state-" + uuid.New().String() + ".txt";
+
+	cmd := exec.Command("/bin/bash", "-c", bashScript)
+  cmd.Env = []string{fmt.Sprintf("TIMELORD_STATE=%s", stateFilePath)}
 	cmd.Dir = executionPath
 	stdout, err := cmd.StdoutPipe()
 	check(err)
@@ -107,7 +108,7 @@ func readFinalState(path string) string {
 	if err != nil {
 		return ""
 	}
-	s := strings.TrimSpace(string(b))
+	s := strings.NewReplacer("\n", "", "\t", "").Replace(strings.TrimSpace(string(b)))
 	if allowedFinalStates[s] {
 		return s
 	}

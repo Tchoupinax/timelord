@@ -98,6 +98,12 @@ To store secrets securely in Vault:
 - `VAULT_PATH`: Path in format `{engine}/data/{secret-name}`
 - `VAULT_TOKEN`: Token to access Vault API
 
+### Script final state (TIMELORD_STATE)
+
+Your scripts can report a final state (**Success**, **Warning**, or **Error**) by writing to the file path in the **`TIMELORD_STATE`** environment variable. This is optional; if you don’t use it, the job result is still based on the script’s exit code.
+
+See [Script final state (TIMELORD_STATE)](./timelord-state.md) for details and examples.
+
 ## Next Steps
 
 Now that you have Timelord set up, you can:
