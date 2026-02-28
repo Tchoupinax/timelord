@@ -14,6 +14,7 @@ export function generateJob(override: Partial<Job> = {}): Job {
     userId: randomUUID(),
     statusComment: null,
     nextPlannedExecution: "",
+    finalState: null,
     ...override,
   };
 }

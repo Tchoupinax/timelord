@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm migrate && pnpm generate && tsc",
     "inspect": "node-modules-inspector",
     "lint": "eslint --fix .",
     "migrate": "DATABASE_URL=postgres://postgres:mysecret@localhost:5439/postgres npx prisma migrate dev",

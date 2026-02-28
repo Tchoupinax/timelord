@@ -49,6 +49,7 @@ func processJob(apiUrl string) {
 					apiUrl+"/job",
 					data,
 					result.Status,
+					result.FinalState,
 				)
 
 				// At the end of the process, clean assets
