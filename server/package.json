@@ -47,7 +47,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@swc/core": "1.15.17",
+    "@swc/core": "1.15.18",
     "@types/archiver": "7.0.0",
     "@types/node": "25.3.3",
     "@vitest/ui": "4.0",
