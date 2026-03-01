@@ -1,7 +1,9 @@
 import pino, { type LoggerOptions } from "pino";
 
+import { env } from "./tools/env.mts";
+
 const config: LoggerOptions = {
-  level: "debug",
+  level: env.LOG_LEVEL,
   base: null,
 };
 
