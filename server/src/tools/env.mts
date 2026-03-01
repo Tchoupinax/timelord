@@ -1,6 +1,7 @@
 import {
   boolean,
   number,
+  oneOf,
   optional,
   string,
   validate,
@@ -41,10 +42,11 @@ export const env = validate({
     API_URL: string,
     CI_COMMIT_SHA: string,
     CI_PIPELINE_CREATED: number,
+    DATABASE_URL: string,
     DISABLE_AUTHENTICATION: booleanWithDefault(false),
     GIT_CONFIGS_REPOSITORY: stringWithDefault("/tmp"),
-    DATABASE_URL: string,
     JOB_DEFAULT_TIMEOUT: string,
+    LOG_LEVEL: oneOf("trace", "debug", "info", "warn", "error", "fatal"),
 
     OIDC_CLIENT_ID:
       process.env.DISABLE_AUTHENTICATION === "true" ? optional(string) : string,
