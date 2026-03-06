@@ -65,7 +65,7 @@ jobs:
           type=ref,event=pr
           type=semver,pattern={{raw}}
     - name: Build and push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: "./ui"
         labels: ${{ steps.meta.outputs.labels }}
@@ -144,7 +144,7 @@ jobs:
           type=semver,pattern={{raw}}
 
     - name: Build and push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: "."
         file: "./server/Dockerfile"
