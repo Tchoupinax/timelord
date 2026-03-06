@@ -1,6 +1,6 @@
 [tools]
 "go:github.com/sgtdi/vai" = "v1.2.1"
-go = "1.26.0"
+go = "1.26.1"
 golangci-lint = "2.10.1"
 node = "24"
 tilt = "latest"
