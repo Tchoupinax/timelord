@@ -47,7 +47,7 @@ setInterval(() => {
 export function router(fastify: FastifyInstance) {
   fastify.register(fastifyRequestContext);
   fastify.register(import("@fastify/cors"), {
-    origin: "http://localhost:3000",
+    origin: env.UI_URL,
     credentials: true,
   });
   fastify.register(import("@fastify/cookie"));
