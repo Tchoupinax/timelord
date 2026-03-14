@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,12 +13,23 @@ import (
 	api "github.com/Tchoupinax/timelord/agent/api"
 	"github.com/Tchoupinax/timelord/agent/bash"
 	"github.com/Tchoupinax/timelord/agent/file"
+	"github.com/Tchoupinax/timelord/agent/telemetry"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func main() {
 	// Check if the version is asked by flag
 	cliCommandDisplayVersion(os.Args)
+
+	ctx := context.Background()
+	shutdown, err := telemetry.Init(ctx)
+	if err != nil {
+		log.Warn().Err(err).Msg("OpenTelemetry init failed; continuing without tracing")
+	} else {
+		defer shutdown()
+	}
 
 	apiUrl := os.Getenv("API_URL")
 	if apiUrl == "" {
@@ -35,22 +47,22 @@ func main() {
 
 func processJob(apiUrl string) {
 	log.Debug().Str("version", version).Msg("Start job processing task in background")
+	tracer := otel.Tracer("timelord/agent")
 
 	for range time.Tick(time.Second * time.Duration(10)) {
 		go func() {
+			ctx, span := tracer.Start(context.Background(), "agent.process_job")
+			defer span.End()
+			span.SetAttributes(attribute.String("agent.hostname", api.GetHostname()))
+
 			log.Debug().Str("url", apiUrl).Str("hostname", api.GetHostname()).Msg("Get job")
 
-			data := getJob(apiUrl + "/job")
+			data := getJob(ctx, apiUrl+"/job")
 			if data != nil {
-				result := bash.Exec(data.File, apiUrl, data)
+				result := bash.Exec(ctx, data.File, apiUrl, data)
 				log.Debug().Msg(data.Id)
 
-				api.PushResult(
-					apiUrl+"/job",
-					data,
-					result.Status,
-					result.FinalState,
-				)
+				api.PushResult(ctx, apiUrl+"/job", data, result.Status, result.FinalState)
 
 				// At the end of the process, clean assets
 				log.Info().Msg("Cleaning")
@@ -66,8 +78,8 @@ func processJob(apiUrl string) {
 	}
 }
 
-func getJob(url string) *api.ResponseData {
-	body, _ := api.ApiGet(url)
+func getJob(ctx context.Context, url string) *api.ResponseData {
+	body, _ := api.ApiGet(ctx, url)
 
 	// Unmarshal the JSON body into the struct
 	var data api.ResponseData
@@ -105,7 +117,7 @@ func getJob(url string) *api.ResponseData {
 		extractPath := folder + data.Id
 
 		assetsUrl := url + "/assets?jobId=" + data.Id
-		if err := file.DownloadFile(assetsUrl, zipFilePath); err != nil {
+		if err := file.DownloadFile(ctx, assetsUrl, zipFilePath); err != nil {
 			fmt.Println("Error downloading file:", err)
 		}
 
@@ -126,6 +138,7 @@ func getJob(url string) *api.ResponseData {
 
 func heartbeat(apiUrl string) {
 	log.Debug().Str("version", version).Msg("Start heartbeat")
+	tracer := otel.Tracer("timelord/agent")
 
 	if version == "" {
 		version = "l-01"
@@ -138,7 +151,9 @@ func heartbeat(apiUrl string) {
 		jsonData, _ := json.Marshal(payload)
 
 		go func() {
-			if _, err := api.ApiPost(apiUrl+"/heartbeat", jsonData); err != nil {
+			ctx, span := tracer.Start(context.Background(), "agent.heartbeat")
+			defer span.End()
+			if _, err := api.ApiPost(ctx, apiUrl+"/heartbeat", jsonData); err != nil {
 				log.Printf("heartbeat failed: %v", err)
 			}
 		}()

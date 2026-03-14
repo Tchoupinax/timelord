@@ -2,6 +2,7 @@ package file
 
 import (
 	"archive/zip"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func DownloadFile(url, outputPath string) error {
+func DownloadFile(ctx context.Context, url, outputPath string) error {
 	outFile, err := os.Create(outputPath)
 	if err != nil {
 		return err
@@ -23,13 +24,12 @@ func DownloadFile(url, outputPath string) error {
 		}
 	}()
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	for key, value := range api.ComputeHeaders() {
 		req.Header.Set(key, value)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := api.HTTPClient.Do(req)
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 )
 
 func PushLog(
+	ctx context.Context,
 	url string,
 	res *ResponseData,
 	log string,
@@ -22,7 +24,7 @@ func PushLog(
 	}
 
 	jsonData, _ := json.Marshal(payload)
-	_, err := ApiPost(url, jsonData)
+	_, err := ApiPost(ctx, url, jsonData)
 	if err != nil {
 		fmt.Println(err)
 	}

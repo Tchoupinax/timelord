@@ -2,6 +2,7 @@ package bash
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -33,7 +34,7 @@ var allowedFinalStates = map[string]bool{
   "Error": true,
 }
 
-func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
+func Exec(ctx context.Context, bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 	log.Info().Msg("🦫  Executing script")
 
 	executionPath := "/tmp/timelord/" + data.Id
@@ -61,8 +62,8 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	go streamOutputToWebSocket(stdout, &wg, "STDOUT", apiUrl, data, &logIndex)
-	go streamOutputToWebSocket(stderr, &wg, "STDERR", apiUrl, data, &logIndex)
+	go streamOutputToWebSocket(ctx, stdout, &wg, "STDOUT", apiUrl, data, &logIndex)
+	go streamOutputToWebSocket(ctx, stderr, &wg, "STDERR", apiUrl, data, &logIndex)
 
 	wg.Wait()
 
@@ -115,7 +116,7 @@ func readFinalState(path string) string {
 	return ""
 }
 
-func streamOutputToWebSocket(pipe io.ReadCloser, wg *sync.WaitGroup, prefix string, apiUrl string, data *api.ResponseData, logIndex *int) {
+func streamOutputToWebSocket(ctx context.Context, pipe io.ReadCloser, wg *sync.WaitGroup, prefix string, apiUrl string, data *api.ResponseData, logIndex *int) {
 	var mu sync.Mutex
 
 	defer wg.Done()
@@ -130,15 +131,8 @@ func streamOutputToWebSocket(pipe io.ReadCloser, wg *sync.WaitGroup, prefix stri
 		*logIndex++
 		mu.Unlock()
 
-		go func() {
-			api.PushLog(
-				apiUrl+"/logs",
-				data,
-				line,
-				createdAt,
-				currentLogIndex,
-				prefix,
-			)
-		}()
+		go func(ctx context.Context, line string, createdAt string, currentLogIndex int, prefix string) {
+			api.PushLog(ctx, apiUrl+"/logs", data, line, createdAt, currentLogIndex, prefix)
+		}(ctx, line, createdAt, currentLogIndex, prefix)
 	}
 }

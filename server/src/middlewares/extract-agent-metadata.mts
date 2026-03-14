@@ -1,9 +1,13 @@
 import { requestContext } from "@fastify/request-context";
+import { trace } from "@opentelemetry/api";
 
 import { type FastifyReply, type FastifyRequest } from "fastify";
 
 import { logger } from "../logger.mts";
 import { prisma } from "../prisma-client.mts";
+
+const ATTR_AGENT_NAME = "timelord.agent.name";
+const ATTR_AGENT_HOSTNAME = "timelord.agent.hostname";
 
 export async function extractAgentMetadata(
   request: FastifyRequest,
@@ -47,6 +51,7 @@ export async function extractAgentMetadata(
           isRobot: true,
           isHuman: false,
         });
+        setAgentSpanAttributes(agentHostname, agentHostname);
       } else {
         requestContext.set("store", {
           isRobot: false,
@@ -67,6 +72,15 @@ export async function extractAgentMetadata(
         isRobot: true,
         isHuman: false,
       });
+      setAgentSpanAttributes(agentName ?? "", agentHostname);
     }
+  }
+}
+
+function setAgentSpanAttributes(agentName: string, agentHostname: string) {
+  const span = trace.getActiveSpan();
+  if (span) {
+    span.setAttribute(ATTR_AGENT_NAME, agentName);
+    span.setAttribute(ATTR_AGENT_HOSTNAME, agentHostname);
   }
 }

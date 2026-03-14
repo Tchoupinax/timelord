@@ -2,17 +2,25 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
+// HTTPClient sends requests with OpenTelemetry trace context (traceparent) so the server can continue the trace.
+var HTTPClient = &http.Client{
+	Transport: otelhttp.NewTransport(http.DefaultTransport),
+}
+
 func ApiGet(
+	ctx context.Context,
 	url string,
 ) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +29,7 @@ func ApiGet(
 		req.Header.Set(key, value)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return []byte{}, err
@@ -46,10 +53,11 @@ func ApiGet(
 }
 
 func ApiPost(
+	ctx context.Context,
 	url string,
 	data []byte,
 ) ([]byte, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +66,7 @@ func ApiPost(
 		req.Header.Set(key, value)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return []byte{}, err
