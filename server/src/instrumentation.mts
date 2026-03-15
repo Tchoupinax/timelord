@@ -3,12 +3,13 @@
  * so the SDK is registered and agent/server requests can be traced.
  * Incoming traceparent from the agent is extracted so server spans are linked to the same trace.
  */
+import FastifyOtel from "@fastify/otel";
 import { propagation } from "@opentelemetry/api";
 import { W3CTraceContextPropagator } from "@opentelemetry/core";
-import FastifyOtelInstrumentation from "@fastify/otel";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import type { Instrumentation } from "@opentelemetry/instrumentation";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { ConsoleSpanExporter } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
@@ -22,9 +23,15 @@ if (!isTest) {
   const serviceName =
     process.env.OTEL_SERVICE_NAME ?? "timelord-server";
 
-  const resource = new Resource({
+  const resource = resourceFromAttributes({
     [ATTR_SERVICE_NAME]: serviceName,
   });
+
+  // CJS export=: ESM default can be the class or namespace with .default; resolve at runtime
+  const FastifyOtelInstrumentation =
+    typeof (FastifyOtel as { default?: unknown }).default === "function"
+      ? (FastifyOtel as { default: new (opts?: { registerOnInitialization?: boolean }) => Instrumentation }).default
+      : (FastifyOtel as unknown as new (opts?: { registerOnInitialization?: boolean }) => Instrumentation);
 
   const sdk = new NodeSDK({
     resource,

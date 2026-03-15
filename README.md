@@ -59,6 +59,18 @@ It's like having a reliable assistant that makes sure all your automated tasks r
 - VAULT_PATH: `{secret-engine-name}/data/{secret-name}`
 - VAULT_TOKEN: `Token to access Vault API`
 
+### Trace collection (Docker Compose)
+
+The stack includes an OpenTelemetry Collector and Jaeger. When you run `docker compose up`, the server sends traces to the collector; you can view them in Jaeger at **http://localhost:16686**.
+
+To verify that traces are collected:
+
+```bash
+./scripts/test-traces-collection.sh
+```
+
+Requires `curl` and `jq`. The script starts the stack, triggers a few requests, then queries Jaeger and exits with success if at least one trace is found.
+
 ### How to install
 
 [Install agent](/agent/README.md)

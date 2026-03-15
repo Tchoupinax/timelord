@@ -1,4 +1,23 @@
 services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4318:4318"   # OTLP HTTP (server + agent send here from host)
+      - "4417:4317"   # OTLP gRPC
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC (receive from otel-collector)
+
   postgres:
     image: postgres:18
     ports:
@@ -30,5 +49,14 @@ services:
     build:
       dockerfile: server/Dockerfile
     env_file: server/.env
-    volumes:
-      - ./server:/app/server:cached
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318/v1/traces"
+    depends_on:
+      - postgres
+      - otel-collector
+    ports:
+      - "9988:9988"
+    command: ["sh", "-c", "pnpm start"]
+
+volumes:
+  server_node_modules:
