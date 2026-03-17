@@ -3,35 +3,40 @@ version: 2
 project_name: timelord
 
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    id: timelord-agent
-    binary: timelord-agent
-    ldflags:
-      - -s -w -X "main.version={{.Version}}" -X "main.commit={{.FullCommit}}" -X "main.buildDate={{.Date}}"
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - darwin
+  goarch:
+  - amd64
+  - arm64
+  id: timelord-agent
+  binary: timelord-agent
+  ldflags:
+  - -s -w -X "main.version={{.Version}}" -X "main.commit={{.FullCommit}}" -X "main.buildDate={{.Date}}"
 
 archives:
-  - formats: ["tar.gz"]
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format_overrides:
-      - goos: windows
-        formats: ["zip"]
+- formats: [ "tar.gz" ]
+  name_template: >-
+    {{ .ProjectName }}_ {{- title .Os }}_ {{- if eq .Arch "amd64" }}x86_64 {{- else if eq .Arch "386" }}i386 {{- else }}{{ .Arch }}{{ end }} {{- if .Arm }}v{{ .Arm }}{{ end }}
+  format_overrides:
+  - goos: windows
+    formats: [ "zip" ]
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+dockers_v2:
+- images:
+  - "ghcr.io/tchoupinax/timelord-agent"
+  - "docker.io/tchoupinax/timelord-agent"
+  tags:
+  - "v{{ .Version }}"
+  platforms:
+  - linux/amd64
+  # - linux/arm64
+  labels:
+    "org.opencontainers.image.created": "{{.Date}}"
+    "org.opencontainers.image.description": "Agent"
+    "org.opencontainers.image.name": "{{.ProjectName}}"
+    "org.opencontainers.image.revision": "{{.FullCommit}}"
+    "org.opencontainers.image.source": "{{.GitURL}}"
+    "org.opencontainers.image.version": "{{.Version}}"
