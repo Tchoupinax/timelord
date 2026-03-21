@@ -15,8 +15,8 @@
   },
   "devDependencies": {
     "knip": "6.0.1",
-    "npm-check-updates": "19.6.3",
-    "turbo": "2.8.16"
+    "npm-check-updates": "19.6.5",
+    "turbo": "2.8.20"
   },
   "packageManager": "pnpm@10.32.1"
 }
