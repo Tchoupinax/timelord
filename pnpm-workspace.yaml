@@ -3,3 +3,10 @@ packages:
   - landing+docs
   - server
   - ui
+allowBuilds:
+  '@prisma/engines': true
+  '@swc/core': true
+  core-js: false
+  core-js-pure: false
+  esbuild: false
+  prisma: true

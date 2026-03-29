@@ -152,7 +152,10 @@
           </button>
 
           <button
-            class="flex items-center px-6 py-3 text-lg text-gray-700 transition-colors duration-200 bg-gray-100 border border-gray-300 font-handwriting dark:text-gray-200 dark:bg-gray-800/80 dark:border-gray-600 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700/80"
+            type="button"
+            class="flex items-center px-6 py-3 text-lg text-gray-700 transition-colors duration-200 bg-gray-100 border border-gray-300 font-handwriting dark:text-gray-200 dark:bg-gray-800/80 dark:border-gray-600 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700/80 disabled:pointer-events-none disabled:opacity-70"
+            :disabled="forceRefreshing"
+            :aria-busy="forceRefreshing"
             @click="forceRefreshGitconfigs()"
           >
             <svg
@@ -161,7 +164,13 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5 mr-2"
+              aria-hidden="true"
+              :class="[
+                'w-5 h-5 mr-2 shrink-0',
+                forceRefreshing
+                  ? 'animate-[spin_2s_linear_infinite] motion-reduce:animate-none'
+                  : '',
+              ]"
             >
               <path
                 stroke-linecap="round"
@@ -169,7 +178,7 @@
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
               />
             </svg>
-            Force Refresh
+            Force pull repositories
           </button>
         </div>
       </div>
@@ -305,6 +314,7 @@ import { ref } from "vue";
 import type { GitConfig } from "../../server/prisma/generated/prisma";
 
 const gitConfigs = ref<Array<GitConfig>>([]);
+const forceRefreshing = ref(false);
 const showModal = ref(false);
 const name = ref("");
 const sshUrl = ref("");
@@ -346,7 +356,11 @@ const addGitRepository = async (
   }
 };
 
+const FORCE_REFRESH_MIN_SPIN_MS = 3000;
+
 const forceRefreshGitconfigs = async () => {
+  forceRefreshing.value = true;
+  const startedAt = Date.now();
   try {
     const response = await fetch(
       `${config.public.apiEndpoint}/git-configs/refresh`,
@@ -355,9 +369,21 @@ const forceRefreshGitconfigs = async () => {
         method: "POST",
       },
     );
-    return await response.json();
+    const data = await response.json().catch(() => undefined);
+    if (response.ok) {
+      await listGitConfigs(`${config.public.apiEndpoint}/git-configs`);
+    }
+    return data;
   } catch (error) {
-    console.error("Error adding Git repository:", error);
+    console.error("Error refreshing Git configs:", error);
+  } finally {
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < FORCE_REFRESH_MIN_SPIN_MS) {
+      await new Promise((r) =>
+        setTimeout(r, FORCE_REFRESH_MIN_SPIN_MS - elapsed),
+      );
+    }
+    forceRefreshing.value = false;
   }
 };
 
