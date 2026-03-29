@@ -51,7 +51,11 @@ export async function refreshGitConfig() {
   }
 }
 
-async function cloneRepo(name: string, sshUrl: string, sshKeyPath: string) {
+async function cloneRepo(
+  name: string,
+  sshUrl: string,
+  sshKeyPath: string,
+) {
   process.env.GIT_SSH_COMMAND = `ssh -i ${sshKeyPath} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no`;
 
   try {

@@ -29,8 +29,8 @@ type ExecResult struct {
 
 var allowedFinalStates = map[string]bool{
 	"Success": true,
-  "Warning": true,
-  "Error": true,
+	"Warning": true,
+	"Error":   true,
 }
 
 func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
@@ -43,10 +43,10 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 		fmt.Println(err)
 	}
 
-	stateFilePath := executionPath + "/" + "timelord-state-" + uuid.New().String() + ".txt";
+	stateFilePath := executionPath + "/" + "timelord-state-" + uuid.New().String() + ".txt"
 
 	cmd := exec.Command("/bin/bash", "-c", bashScript)
-  cmd.Env = []string{fmt.Sprintf("TIMELORD_STATE=%s", stateFilePath)}
+	cmd.Env = []string{fmt.Sprintf("TIMELORD_STATE=%s", stateFilePath)}
 	cmd.Dir = executionPath
 	stdout, err := cmd.StdoutPipe()
 	check(err)
