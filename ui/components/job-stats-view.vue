@@ -144,7 +144,7 @@
             v-tippy="{
               content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}`,
             }"
-            class="flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
+            class="flex items-center justify-center flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
             :class="{
               'bg-green-200/50 hover:bg-green-300/60 border-green-300/50 dark:bg-green-300/40 dark:hover:bg-green-200/50 dark:border-green-300/40 border-yellow-500 border-6':
                 subJob.statusCode === 0 && subJob.finalState === 'Warning',
@@ -152,11 +152,17 @@
                 subJob.statusCode === 0 && subJob.finalState !== 'Warning',
               'bg-red-400/50 hover:bg-red-500/60 border-red-500/50 dark:bg-red-500/40 dark:hover:bg-red-400/50 dark:border-red-500/40':
                 subJob.statusCode !== 0 && subJob.statusCode !== -1,
-              'bg-violet-400/50 hover:bg-violet-500/60 border-violet-500/50 dark:bg-violet-500/40 dark:hover:bg-violet-400/50 dark:border-violet-500/40 animate-pulse':
+              'bg-violet-500/90 border-violet-500/50 dark:bg-violet-500/40 dark:hover:bg-violet-400/50 dark:border-violet-500/40':
                 subJob.statusCode === -1,
             }"
             @click="showLogs(subJob.id)"
-          ></div>
+          >
+            <div v-if="subJob.statusCode === -1" class="flex items-end justify-center space-x-0.5 h-4">
+              <div class="w-1 rounded-full bg-violet-200/80 equalizer-bar" style="animation-delay: 0ms" />
+              <div class="w-1 rounded-full bg-violet-200/80 equalizer-bar" style="animation-delay: 160ms" />
+              <div class="w-1 rounded-full bg-violet-200/80 equalizer-bar" style="animation-delay: 320ms" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -432,3 +438,15 @@ const performDelayedSentence = (job: GroupedJob): string => {
   return `🚨 Delayed for more than ${Math.floor(days)} days`;
 };
 </script>
+
+<style scoped>
+@keyframes equalizer {
+  0%, 100% { height: 20%; }
+  50% { height: 100%; }
+}
+
+.equalizer-bar {
+  animation: equalizer 0.7s ease-in-out infinite;
+  min-height: 2px;
+}
+</style>
