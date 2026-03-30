@@ -105,29 +105,43 @@ async function getOneJob(
   };
 
   if (queuedJob && metadataFiles.map(m => m.title).includes(queuedJob?.title)) {
-    logger.info(`Queued job detected "${queuedJob.title}"`);
-
-    const job = metadataFiles.find(m => m.title === queuedJob.title)!;
-    const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
-
-    cronObject.title = job.title;
-    cronObject.cron = "Manual";
-    cronObject.nextDate = job.nextDate;
-    cronObject.keepLastCount = job.keepLastCount ?? -1;
-    cronObject.file = await injectSecret(
-      fs.readFileSync(files[jobIndex] as string, "utf8"),
-    );
-
-    await prisma.jobQueue.delete({
+    const agentRunningJob = await prisma.job.findFirst({
       where: {
-        jobId: {
-          title: job.title,
-          userId: store.userId,
-        },
+        hostname: identity,
+        userId: store.userId,
+        statusCode: -1,
       },
     });
 
-    return cronObject;
+    if (agentRunningJob) {
+      logger.debug(
+        `Agent "${identity}" already has a running job ("${agentRunningJob.title}"), queue job "${queuedJob.title}" will not be taken`,
+      );
+    } else {
+      logger.info(`Queued job detected "${queuedJob.title}"`);
+
+      const job = metadataFiles.find(m => m.title === queuedJob.title)!;
+      const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
+
+      cronObject.title = job.title;
+      cronObject.cron = "Manual";
+      cronObject.nextDate = job.nextDate;
+      cronObject.keepLastCount = job.keepLastCount ?? -1;
+      cronObject.file = await injectSecret(
+        fs.readFileSync(files[jobIndex] as string, "utf8"),
+      );
+
+      await prisma.jobQueue.delete({
+        where: {
+          jobId: {
+            title: job.title,
+            userId: store.userId,
+          },
+        },
+      });
+
+      return cronObject;
+    }
   }
 
   for (const [index, metadata] of metadataFiles.entries()) {
