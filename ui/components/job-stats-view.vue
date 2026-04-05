@@ -22,9 +22,9 @@
                 (new Date() - new Date(job.jobs[0]?.createdAt)) / 1000 / 60,
               )
             "
-            class="my-2 text-xl text-gray-500"
+            class="my-2 text-xs text-gray-500 text-red-400"
           >
-            {{ performDelayedSentence(job) }}
+            🚨 Delayed {{ performDelayedSentence(job) }}
           </p>
 
           <div class="flex justify-between w-full mt-4">
@@ -418,24 +418,29 @@ const getCronInterval = (job: GroupedJob): number => {
   return +Infinity;
 };
 
+const unit = (n: number, one: string, many: string): string =>
+  `${n} ${n === 1 ? one : many}`;
+
 const performDelayedSentence = (job: GroupedJob): string => {
   const now = new Date().getTime();
   // @ts-expect-error
   const createdAt = new Date(job.jobs[0]?.createdAt).getTime();
-  const minutes = Math.floor((now - createdAt) / 1000 / 60);
+  const totalMinutes = Math.floor((now - createdAt) / 1000 / 60);
 
-  if (minutes < 60) {
-    return `🚨 Delayed for ${minutes} minutes`;
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(unit(days, 'day', 'days'));
+  if (hours > 0) parts.push(unit(hours, 'hour', 'hours'));
+  if (minutes > 0) parts.push(unit(minutes, 'minute', 'minutes'));
+
+  if (parts.length === 0) {
+    return 'for less than a minute';
   }
 
-  const hours = minutes / 60;
-  if (hours < 24) {
-    return `🚨 Delayed for ${hours} hours`;
-  }
-
-  const days = hours / 24;
-
-  return `🚨 Delayed for more than ${Math.floor(days)} days`;
+  return `for ${parts.join(' and ')}`;
 };
 </script>
 
