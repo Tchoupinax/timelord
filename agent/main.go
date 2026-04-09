@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	api "github.com/Tchoupinax/timelord/agent/api"
 	"github.com/Tchoupinax/timelord/agent/bash"
 	"github.com/Tchoupinax/timelord/agent/file"
+	"github.com/Tchoupinax/timelord/agent/updater"
 	"github.com/rs/zerolog/log"
 )
+
+var runningJobs atomic.Int32
 
 func main() {
 	// Check if the version is asked by flag
@@ -24,6 +28,12 @@ func main() {
 		apiUrl = "http://localhost:9988"
 	}
 
+	updater.StartAutoUpdateLoop(updater.Config{
+		Version: version,
+		HasRunningJobs: func() bool {
+			return runningJobs.Load() > 0
+		},
+	})
 	go processJob(apiUrl)
 	go heartbeat(apiUrl)
 
@@ -42,6 +52,9 @@ func processJob(apiUrl string) {
 
 			data := getJob(apiUrl + "/job")
 			if data != nil {
+				runningJobs.Add(1)
+				defer runningJobs.Add(-1)
+
 				result := bash.Exec(data.File, apiUrl, data)
 				log.Debug().Msg(data.Id)
 
