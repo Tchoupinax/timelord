@@ -78,6 +78,8 @@ model GitConfig {
   createdAt                 DateTime  @default(now()) @map("created_at")
   updatedAt                 DateTime  @updatedAt @map("updated_at")
   pullAt                    DateTime? @map("pull_at")
+  lastCommitSha             String?   @map("last_commit_sha")
+  lastCommitMessage         String?   @map("last_commit_message")
 
   @@map("git_configs")
 }

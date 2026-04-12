@@ -8,9 +8,12 @@ export async function listGitConfigs(_: FastifyRequest, reply: FastifyReply) {
 
   const configs = await prisma.gitConfig.findMany({
     select: {
+      id: true,
       createdAt: true,
       enabled: true,
       folderNameInGitRepository: true,
+      lastCommitSha: true,
+      lastCommitMessage: true,
       name: true,
       pullAt: true,
       sshUrl: true,

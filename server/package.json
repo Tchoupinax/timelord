@@ -19,7 +19,7 @@
     "=================================================================": "",
     "generate": "npx prisma generate",
     "==================================================================": "",
-    "prewatch": "docker compose up -d && npx prisma generate",
+    "prewatch": "docker compose up -d && pnpm migrate dev && pnpm generate",
     "watch": "tsx watch --require dotenv/config src/index.mts",
     "start": "tsx src/index.mts"
   },
