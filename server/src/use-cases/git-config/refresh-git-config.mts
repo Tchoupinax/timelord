@@ -17,6 +17,7 @@ export async function refreshGitConfig() {
       if (!fs.existsSync(path.join(env.GIT_CONFIGS_REPOSITORY, config.name))) {
         logger.info(`Refreshing git config — clone ${config.name}`);
         await cloneRepo(
+          config.id,
           config.name,
           config.sshUrl,
           getSshFilePath(config.name),
@@ -28,9 +29,14 @@ export async function refreshGitConfig() {
           const gitFolder = simpleGit(folder);
           await gitFolder.pull();
 
+          const log = await gitFolder.log({ maxCount: 1 });
+          const latestCommit = log.latest;
+
           await prisma.gitConfig.update({
             data: {
               pullAt: new Date(),
+              lastCommitSha: latestCommit?.hash ?? null,
+              lastCommitMessage: latestCommit?.message ?? null,
             },
             where: {
               id: config.id,
@@ -41,6 +47,7 @@ export async function refreshGitConfig() {
 
           fs.rmSync(folder, { recursive: true, force: true });
           await cloneRepo(
+            config.id,
             config.name,
             config.sshUrl,
             getSshFilePath(config.name),
@@ -52,6 +59,7 @@ export async function refreshGitConfig() {
 }
 
 async function cloneRepo(
+  configId: string,
   name: string,
   sshUrl: string,
   sshKeyPath: string,
@@ -61,6 +69,19 @@ async function cloneRepo(
   try {
     const gitClient = simpleGit(env.GIT_CONFIGS_REPOSITORY, {});
     await gitClient.clone(sshUrl, name);
+
+    const clonedFolder = path.join(env.GIT_CONFIGS_REPOSITORY, name);
+    const log = await simpleGit(clonedFolder).log({ maxCount: 1 });
+    const latestCommit = log.latest;
+
+    await prisma.gitConfig.update({
+      data: {
+        pullAt: new Date(),
+        lastCommitSha: latestCommit?.hash ?? null,
+        lastCommitMessage: latestCommit?.message ?? null,
+      },
+      where: { id: configId },
+    });
   } catch (err) {
     logger.error(err);
   }

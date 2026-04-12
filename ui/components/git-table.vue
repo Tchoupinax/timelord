@@ -52,12 +52,14 @@
         v-for="gitConfig in gitConfigs"
         :key="gitConfig.name"
         :git-config="gitConfig"
+        :expanded="expandedConfigId === gitConfig.id"
+        @select="toggleExpanded(gitConfig.id)"
         @view-result="showResult"
       />
     </div>
 
     <div
-      v-if="gitConfigs.length === 0"
+      v-if="gitConfigs?.length === 0"
       class="flex flex-col items-center justify-center px-6 py-16"
     >
       <div
@@ -114,9 +116,14 @@ defineProps({
 });
 
 const selectedResult = ref(null);
+const expandedConfigId = ref<string | null>(null);
 
 // @ts-expect-error
 const showResult = result => {
   selectedResult.value = result;
+};
+
+const toggleExpanded = (id: string) => {
+  expandedConfigId.value = expandedConfigId.value === id ? null : id;
 };
 </script>

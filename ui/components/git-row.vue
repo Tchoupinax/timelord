@@ -1,7 +1,9 @@
 <template>
+  <div>
   <div
     class="grid grid-cols-12 gap-4 px-6 py-4 transition-all duration-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 group"
-    @click="viewResult"
+    :class="expanded ? 'bg-gray-50 dark:bg-gray-800/30' : ''"
+    @click="emit('select')"
   >
     <div class="flex items-center col-span-2">
       <div class="flex items-center space-x-3">
@@ -110,6 +112,46 @@
       </button>
     </div>
   </div>
+
+  <Transition
+    enter-active-class="transition-all duration-200 ease-out"
+    enter-from-class="opacity-0 -translate-y-1"
+    enter-to-class="opacity-100 translate-y-0"
+    leave-active-class="transition-all duration-150 ease-in"
+    leave-from-class="opacity-100 translate-y-0"
+    leave-to-class="opacity-0 -translate-y-1"
+  >
+    <div
+      v-if="expanded"
+      class="px-6 py-5 border-t border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30"
+    >
+      <div class="flex items-start gap-10">
+        <div>
+          <p class="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase font-handwriting dark:text-gray-400">
+            Latest Commit SHA
+          </p>
+          <code
+            v-if="gitConfig.lastCommitSha"
+            class="px-2 py-1 font-mono text-sm text-gray-800 bg-gray-100 border border-gray-200 dark:bg-gray-700/60 dark:border-gray-600 dark:text-gray-200 rounded-lg"
+            :title="gitConfig.lastCommitSha"
+          >{{ gitConfig.lastCommitSha.slice(0, 12) }}</code>
+          <span v-else class="text-sm text-gray-400 font-handwriting dark:text-gray-500">—</span>
+        </div>
+
+        <div class="flex-1">
+          <p class="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase font-handwriting dark:text-gray-400">
+            Latest Commit Message
+          </p>
+          <p
+            v-if="gitConfig.lastCommitMessage"
+            class="text-sm text-gray-800 font-handwriting dark:text-gray-200"
+          >{{ gitConfig.lastCommitMessage }}</p>
+          <span v-else class="text-sm text-gray-400 font-handwriting dark:text-gray-500">No commit synced yet</span>
+        </div>
+      </div>
+    </div>
+  </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -119,18 +161,18 @@ import { format } from "timeago.js";
 
 import type { GitConfig } from "../../server/prisma/generated/prisma";
 
-const emit = defineEmits(["view-result"]);
+const emit = defineEmits(["view-result", "select"]);
 
 const props = defineProps({
   gitConfig: {
     type: Object as PropType<GitConfig>,
     required: true,
   },
+  expanded: {
+    type: Boolean,
+    default: false,
+  },
 });
-
-const viewResult = () => {
-  emit("view-result", props.gitConfig.id);
-};
 
 const toggleEnabled = () => {
   console.log("Toggle enabled for:", props.gitConfig.name);
