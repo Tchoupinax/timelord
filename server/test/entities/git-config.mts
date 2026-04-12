@@ -16,6 +16,8 @@ export function generateGitConfig(
     sshUrl: "git://github.com/Tchoupinax/toto.git",
     updatedAt: new Date(),
     userId: randomUUID(),
+    lastCommitMessage: "feat: update script A",
+    lastCommitSha: "c90578b",
     ...override,
   };
 }
