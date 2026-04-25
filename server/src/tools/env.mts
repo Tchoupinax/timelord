@@ -45,6 +45,7 @@ export const env = validate({
     DATABASE_URL: string,
     DISABLE_AUTHENTICATION: booleanWithDefault(false),
     GIT_CONFIGS_REPOSITORY: stringWithDefault("/tmp"),
+    HOMEPAGE_TOKEN: optional(string),
     JOB_DEFAULT_TIMEOUT: string,
     LOG_LEVEL: oneOf("trace", "debug", "info", "warn", "error", "fatal"),
 

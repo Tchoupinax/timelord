@@ -11,7 +11,7 @@ export default defineConfig({
     hookTimeout: 30000,
     testTimeout: 30000,
     include: ["src/**/*.spec.mts"],
-    reporters: ["basic", "default"],
+    reporters: ["default"],
   },
   plugins: [
     // This is required to build the test files with SWC
