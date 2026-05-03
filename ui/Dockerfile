@@ -1,7 +1,7 @@
 FROM node:25-alpine
 
-RUN addgroup -S -g 999 timelord && \
-    adduser -S -u 999 -G timelord timelord
+RUN addgroup -S -g 1001 timelord && \
+    adduser -S -u 1001 -G timelord timelord
 
 WORKDIR /app
 
