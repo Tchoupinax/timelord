@@ -132,9 +132,11 @@
 
         <div class="flex space-x-1">
           <div
-            v-for="(_, idx) in ((jobMetadata[job.title] ??
-              Math.max(10, displayedJobs(job).length)) as number) -
-            displayedJobs(job).length"
+            v-for="(_, idx) in Math.max(
+              0,
+              Number(jobMetadata[job.title] ?? Math.max(10, displayedJobs(job).length)) -
+                displayedJobs(job).length,
+            )"
             :key="'empty-' + idx"
             class="flex-1 h-8 transition-all duration-200 border border-gray-400 rounded-lg bg-gray-200/30 dark:bg-gray-700/30"
           ></div>
@@ -242,7 +244,7 @@ const $props = defineProps({
     required: true,
   },
   jobMetadata: {
-    type: Object as PropType<Record<string, string>>,
+    type: Object as PropType<Record<string, number>>,
     required: true,
   },
 });

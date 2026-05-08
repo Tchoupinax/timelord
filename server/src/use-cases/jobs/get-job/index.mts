@@ -121,20 +121,20 @@ async function getOneJob(
 
       const job = metadataFiles.find(m => m.title === queuedJob.title)!;
       const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
-
-      cronObject.title = job.title;
-      cronObject.cron = "Manual";
-      cronObject.nextDate = job.nextDate;
-      cronObject.keepLastCount = job.keepLastCount ?? -1;
-      let queueJobCanRun = true;
       try {
-        cronObject.file = await injectSecret(
+        const file = await injectSecret(
           fs.readFileSync(files[jobIndex] as string, "utf8"),
         );
+
+        cronObject.title = job.title;
+        cronObject.cron = "Manual";
+        cronObject.nextDate = job.nextDate;
+        cronObject.keepLastCount = job.keepLastCount ?? -1;
+        cronObject.file = file;
       } catch (error) {
         const errorMessage = getErrorMessage(error);
         logger.error(
-          { error, jobTitle: job.title },
+          { err: error, jobTitle: job.title },
           "Queued job could not be prepared",
         );
 
@@ -152,20 +152,18 @@ async function getOneJob(
             },
           },
         });
-        queueJobCanRun = false;
+        return await getOneJob(configs, identity);
       }
 
-      if (queueJobCanRun) {
-        await prisma.jobQueue.delete({
-          where: {
-            jobId: {
-              title: job.title,
-              userId: store.userId,
-            },
+      await prisma.jobQueue.delete({
+        where: {
+          jobId: {
+            title: job.title,
+            userId: store.userId,
           },
-        });
-        return cronObject;
-      }
+        },
+      });
+      return cronObject;
     }
   }
 
@@ -193,19 +191,20 @@ async function getOneJob(
         });
 
         if (!alreadyStartedJob) {
-          cronObject.title = metadata.title;
-          cronObject.cron = metadata.cron;
-          cronObject.nextDate = metadata.nextDate;
-          cronObject.keepLastCount = metadata.keepLastCount ?? -1;
           try {
-            cronObject.file = await injectSecret(
+            const file = await injectSecret(
               fs.readFileSync(files[index] as string, "utf8"),
             );
+            cronObject.title = metadata.title;
+            cronObject.cron = metadata.cron;
+            cronObject.nextDate = metadata.nextDate;
+            cronObject.keepLastCount = metadata.keepLastCount ?? -1;
+            cronObject.file = file;
             break;
           } catch (error) {
             const errorMessage = getErrorMessage(error);
             logger.error(
-              { error, jobTitle: metadata.title },
+              { err: error, jobTitle: metadata.title },
               "Scheduled job could not be prepared",
             );
             await markJobAsSelectionError({
