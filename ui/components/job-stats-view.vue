@@ -132,9 +132,11 @@
 
         <div class="flex space-x-1">
           <div
-            v-for="(_, idx) in ((jobMetadata[job.title] ??
-              Math.max(10, displayedJobs(job).length)) as number) -
-            displayedJobs(job).length"
+            v-for="(_, idx) in Math.max(
+              0,
+              Number(jobMetadata[job.title] ?? Math.max(10, displayedJobs(job).length)) -
+                displayedJobs(job).length,
+            )"
             :key="'empty-' + idx"
             class="flex-1 h-8 transition-all duration-200 border border-gray-400 rounded-lg bg-gray-200/30 dark:bg-gray-700/30"
           ></div>
@@ -142,7 +144,7 @@
             v-for="subJob of displayedJobs(job)"
             :key="subJob.id"
             v-tippy="{
-              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}`,
+              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
             }"
             class="flex items-center justify-center flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
             :class="{
@@ -242,7 +244,7 @@ const $props = defineProps({
     required: true,
   },
   jobMetadata: {
-    type: Object as PropType<Record<string, string>>,
+    type: Object as PropType<Record<string, number>>,
     required: true,
   },
 });
@@ -334,6 +336,11 @@ const showLogs = (jobId: string) => {
 
 const displayedJobs = (job: GroupedJob) =>
   job.jobs.filter(j => !j.neverExecuted).reverse();
+
+const latestComment = (job: GroupedJob): string => {
+  const commentedJob = job.jobs.find(j => Boolean(j.statusComment));
+  return commentedJob?.statusComment ?? "";
+};
 
 const computeJobStats = (job: GroupedJob) => {
   const values = job.jobs

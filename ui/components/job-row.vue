@@ -23,9 +23,18 @@
           </svg>
         </div>
         <div class="flex items-center space-x-2">
-          <span class="font-medium text-gray-900 truncate dark:text-white">{{
-            job.title
-          }}</span>
+          <div class="min-w-0">
+            <span class="font-medium text-gray-900 truncate dark:text-white block">{{
+              job.title
+            }}</span>
+            <span
+              v-if="job.statusComment"
+              v-tippy="{ content: job.statusComment }"
+              class="text-xs text-red-600 dark:text-red-300 truncate block cursor-help"
+            >
+              {{ job.statusComment }}
+            </span>
+          </div>
           <div class="flex items-center">
             <div
               v-if="job.statusCode === 0 || !job.statusCode"

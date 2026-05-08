@@ -5,6 +5,9 @@ on:
     branches:
     - "*"
 
+permissions:
+  packages: write
+
 jobs:
   labels:
     name: Autodetect labels 🔍
@@ -17,16 +20,14 @@ jobs:
         privateKey: ${{ secrets.DEPLOY_APP_KEY }}
 
   build-ui:
-    name: "🟢 Build user interface (Nuxt.js project)"
+    name: "🟢 Release user interface 🐳"
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v6
 
-    - name: "Setup PNPM"
+    - name: Setup PNPM
       uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e # v6.0.3
-      with:
-        version: 10.33.2
 
     - name: Use Node.js 25
       uses: actions/setup-node@v6
@@ -39,17 +40,53 @@ jobs:
         pnpm install --frozen-lockfile --filter timelord-ui
         pnpm build --filter timelord-ui
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-ui
+          tchoupinax/timelord-ui
+        flavor: latest=true
+        tags: |
+          type=sha,format=long
+    - name: Build and push
+      uses: docker/build-push-action@v7
+      with:
+        context: "./ui"
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+
   build-server:
-    name: "🟣 Build server and generate prisma"
+    name: "🟣 Release server 🐳"
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v6
 
-    - name: "Setup PNPM"
+    - name: Setup PNPM
       uses: pnpm/action-setup@903f9c1a6ebcba6cf41d87230be49611ac97822e # v6.0.3
-      with:
-        version: 10.33.2
 
     - name: Use Node.js 24
       uses: actions/setup-node@v6
@@ -76,6 +113,49 @@ jobs:
         VAULT_ADDR: "_"
         VAULT_PATH: "_"
         VAULT_TOKEN: "_"
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-server
+          tchoupinax/timelord-server
+        flavor: latest=true
+        tags: |
+          type=sha,format=long
+
+    - name: Build and push
+      uses: docker/build-push-action@v7
+      with:
+        context: "."
+        file: "./server/Dockerfile"
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        build-args: |
+          CI_COMMIT_SHA=${{ github.sha }}
+          CI_PIPELINE_CREATED=111111111
 
   build-agent:
     name: "🔵 Build agent binary"

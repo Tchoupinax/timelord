@@ -12,20 +12,20 @@ RUN addgroup -S -g 1001 timelord && \
 
 WORKDIR /app
 
-#RUN apk add --update --no-cache openssh git
+RUN apk add --update --no-cache openssh git
 
-#COPY --chown=timelord:timelord package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
-#COPY --chown=timelord:timelord server/package.json /app/server/package.json
+COPY --chown=timelord:timelord package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+COPY --chown=timelord:timelord server/package.json /app/server/package.json
 
-#RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
-#COPY --chown=timelord:timelord server/src /app/server/src
-#COPY --chown=timelord:timelord server/prisma /app/server/prisma
-#COPY --chown=timelord:timelord server/prisma.config.mts /app/server/prisma.config.mts
-#COPY --chown=timelord:timelord server/tsconfig.json /app/server/tsconfig.json
+COPY --chown=timelord:timelord server/src /app/server/src
+COPY --chown=timelord:timelord server/prisma /app/server/prisma
+COPY --chown=timelord:timelord server/prisma.config.mts /app/server/prisma.config.mts
+COPY --chown=timelord:timelord server/tsconfig.json /app/server/tsconfig.json
 
-#USER timelord
+USER timelord
 
-#WORKDIR /app/server
+WORKDIR /app/server
 
-#CMD pnpm start
+CMD ["pnpm", "start"]
