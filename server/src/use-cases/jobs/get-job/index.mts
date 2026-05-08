@@ -50,8 +50,7 @@ export async function getJob() {
       hasAssets: true,
     };
   } catch (err) {
-    // @ts-expect-error legacy
-    logger.error(err.message);
+    logger.error(err);
     return {
       message: `No script available for you ${store?.agentHostname}`,
     };
@@ -127,20 +126,46 @@ async function getOneJob(
       cronObject.cron = "Manual";
       cronObject.nextDate = job.nextDate;
       cronObject.keepLastCount = job.keepLastCount ?? -1;
-      cronObject.file = await injectSecret(
-        fs.readFileSync(files[jobIndex] as string, "utf8"),
-      );
+      let queueJobCanRun = true;
+      try {
+        cronObject.file = await injectSecret(
+          fs.readFileSync(files[jobIndex] as string, "utf8"),
+        );
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        logger.error(
+          { error, jobTitle: job.title },
+          "Queued job could not be prepared",
+        );
 
-      await prisma.jobQueue.delete({
-        where: {
-          jobId: {
-            title: job.title,
-            userId: store.userId,
+        await markJobAsSelectionError({
+          cron: "Manual",
+          nextDate: job.nextDate,
+          title: job.title,
+          errorMessage,
+        });
+        await prisma.jobQueue.delete({
+          where: {
+            jobId: {
+              title: job.title,
+              userId: store.userId,
+            },
           },
-        },
-      });
+        });
+        queueJobCanRun = false;
+      }
 
-      return cronObject;
+      if (queueJobCanRun) {
+        await prisma.jobQueue.delete({
+          where: {
+            jobId: {
+              title: job.title,
+              userId: store.userId,
+            },
+          },
+        });
+        return cronObject;
+      }
     }
   }
 
@@ -172,11 +197,24 @@ async function getOneJob(
           cronObject.cron = metadata.cron;
           cronObject.nextDate = metadata.nextDate;
           cronObject.keepLastCount = metadata.keepLastCount ?? -1;
-          cronObject.file = await injectSecret(
-            fs.readFileSync(files[index] as string, "utf8"),
-          );
-
-          break;
+          try {
+            cronObject.file = await injectSecret(
+              fs.readFileSync(files[index] as string, "utf8"),
+            );
+            break;
+          } catch (error) {
+            const errorMessage = getErrorMessage(error);
+            logger.error(
+              { error, jobTitle: metadata.title },
+              "Scheduled job could not be prepared",
+            );
+            await markJobAsSelectionError({
+              cron: metadata.cron,
+              nextDate: metadata.nextDate,
+              title: metadata.title,
+              errorMessage,
+            });
+          }
         }
       } else {
         logger.debug(`Same job in progress detected, aborted (${job.title})`);
@@ -229,4 +267,60 @@ async function removeLastNthJob(jobTitle: string, keeplastCount: number) {
   } catch (error) {
     console.error("Error removing items:", error);
   }
+}
+
+type MarkJobAsSelectionErrorPayload = {
+  title?: string;
+  cron?: string;
+  nextDate?: string;
+  errorMessage: string;
+};
+
+async function markJobAsSelectionError({
+  title,
+  cron,
+  nextDate,
+  errorMessage,
+}: MarkJobAsSelectionErrorPayload) {
+  const store = getRobotStore();
+
+  if (!title) {
+    return;
+  }
+
+  const existingJobWithSameFailure = await prisma.job.findFirst({
+    where: {
+      userId: store.userId,
+      title,
+      cron: cron ?? null,
+      nextPlannedExecution: nextDate ?? null,
+      statusCode: 1,
+      statusComment: errorMessage,
+    },
+    select: {
+      id: true,
+    },
+  });
+  if (existingJobWithSameFailure) {
+    return;
+  }
+
+  await prisma.job.create({
+    data: {
+      cron: cron ?? null,
+      hostname: store?.agentHostname,
+      nextPlannedExecution: nextDate ?? null,
+      statusCode: 1,
+      statusComment: errorMessage,
+      title,
+      userId: store?.userId,
+    },
+  });
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
 }
