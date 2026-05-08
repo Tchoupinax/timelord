@@ -79,7 +79,7 @@ jobs:
 
   build-server-docker:
     name: "🟣 Build server Docker image"
-    if: contains(github.event.head_commit.message, '[DOCKER]')
+    #if: contains(github.event.head_commit.message, '[DOCKER]')
     runs-on: ubuntu-latest
     needs:
     - build-server
