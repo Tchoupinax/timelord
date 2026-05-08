@@ -33,6 +33,13 @@
             >
               {{ job.hostname }}
             </span>
+            <span
+              v-if="latestComment(job)"
+              v-tippy="{ content: latestComment(job) }"
+              class="mx-2 inline-flex items-center px-2.5 py-1 text-xs text-red-700 border border-red-200 rounded-2xl bg-red-50 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 truncate cursor-help"
+            >
+              {{ latestComment(job) }}
+            </span>
 
             <button
               v-if="
@@ -144,7 +151,7 @@
             v-for="subJob of displayedJobs(job)"
             :key="subJob.id"
             v-tippy="{
-              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}`,
+              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
             }"
             class="flex items-center justify-center flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
             :class="{
@@ -336,6 +343,11 @@ const showLogs = (jobId: string) => {
 
 const displayedJobs = (job: GroupedJob) =>
   job.jobs.filter(j => !j.neverExecuted).reverse();
+
+const latestComment = (job: GroupedJob): string => {
+  const commentedJob = job.jobs.find(j => Boolean(j.statusComment));
+  return commentedJob?.statusComment ?? "";
+};
 
 const computeJobStats = (job: GroupedJob) => {
   const values = job.jobs
