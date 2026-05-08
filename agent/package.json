@@ -1,5 +1,5 @@
 {
-  "name": "timelord-agent",
+  "name": "@timelord/agent",
   "version": "1.1.0",
   "private": true,
   "scripts": {

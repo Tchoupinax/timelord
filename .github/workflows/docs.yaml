@@ -36,13 +36,13 @@ jobs:
         cache: "pnpm"
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile --filter landing-docs
+      run: pnpm install --frozen-lockfile --filter @timelord/landing+docs
 
     - name: Set base URL for GitHub Pages
       run: echo "BASE_URL=/${GITHUB_REPOSITORY#*/}/" >> $GITHUB_ENV
 
     - name: Build Docusaurus
-      run: pnpm build --filter landing-docs
+      run: pnpm build --filter @timelord/landing+docs
       env:
         GITHUB_PAGES: "true"
 
