@@ -4,10 +4,14 @@ on:
   pull_request:
     branches:
     - "*"
+  push:
+    branches:
+    - "*"
 
 jobs:
   labels:
     name: Autodetect labels 🔍
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - name: Autodetect labels 🔍
@@ -18,6 +22,7 @@ jobs:
 
   build-ui:
     name: "🟢 Build user interface (Nuxt.js project)"
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -41,6 +46,7 @@ jobs:
 
   build-server:
     name: "🟣 Build server and generate prisma"
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, '[DOCKER]')
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -77,8 +83,72 @@ jobs:
         VAULT_PATH: "_"
         VAULT_TOKEN: "_"
 
+  build-server-docker:
+    name: "🟣 Build server Docker image"
+    if: contains(github.event.head_commit.message, '[DOCKER]')
+    runs-on: ubuntu-latest
+    needs:
+    - build-server
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-server
+          tchoupinax/timelord-server
+        flavor: latest=true
+        tags: |
+          type=sha,format=long
+
+    - name: Build and push
+      uses: docker/build-push-action@v7
+      with:
+        context: "."
+        file: "./server/Dockerfile"
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        build-args: |
+          CI_COMMIT_SHA=${{ github.sha }}
+          CI_PIPELINE_CREATED=111111111
+
   build-agent:
     name: "🔵 Build agent binary"
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
     - name: Check build success 🦫
