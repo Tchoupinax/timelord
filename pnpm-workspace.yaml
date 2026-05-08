@@ -4,9 +4,11 @@ packages:
   - server
   - ui
 allowBuilds:
+  '@parcel/watcher': false
   '@prisma/engines': true
   '@swc/core': true
   core-js: false
   core-js-pure: false
   esbuild: false
   prisma: true
+  unrs-resolver: false
