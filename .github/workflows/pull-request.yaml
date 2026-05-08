@@ -43,7 +43,7 @@ jobs:
         pnpm build --filter timelord-ui
 
   build-server:
-    name: "🟣 Build server and generate prisma"
+    name: "🟣 Release server 🐳"
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -80,28 +80,8 @@ jobs:
         VAULT_PATH: "_"
         VAULT_TOKEN: "_"
 
-  build-server-docker:
-    name: "🟣 Build server Docker image"
-    #if: contains(github.event.head_commit.message, '[DOCKER]')
-    runs-on: ubuntu-latest
-    needs:
-    - build-server
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v6
-
     - name: Set up Docker Build
       uses: docker/setup-buildx-action@v4
-
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Build
       uses: docker/setup-buildx-action@v4
