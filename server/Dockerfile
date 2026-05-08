@@ -28,4 +28,4 @@ USER timelord
 
 WORKDIR /app/server
 
-CMD pnpm start
+CMD ["pnpm", "start"]

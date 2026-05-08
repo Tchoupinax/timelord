@@ -33,13 +33,6 @@
             >
               {{ job.hostname }}
             </span>
-            <span
-              v-if="latestComment(job)"
-              v-tippy="{ content: latestComment(job) }"
-              class="mx-2 inline-flex items-center px-2.5 py-1 text-xs text-red-700 border border-red-200 rounded-2xl bg-red-50 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 truncate cursor-help"
-            >
-              {{ latestComment(job) }}
-            </span>
 
             <button
               v-if="
