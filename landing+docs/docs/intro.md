@@ -104,15 +104,6 @@ Your scripts can report a final state (**Success**, **Warning**, or **Error**) b
 
 See [Script final state (TIMELORD_STATE)](./timelord-state.md) for details and examples.
 
-## Next Steps
-
-Now that you have Timelord set up, you can:
-
-<!--- 📖 [Create your first job](./tutorial-basics/create-a-document.md)
-- 🤖 [Manage agents](./tutorial-basics/create-a-page.md)
-- 🔧 [Configure Git integration](./tutorial-basics/create-a-blog-post.md)
-- 🔒 [Set up secrets management](./tutorial-basics/deploy-your-site.md)-->
-
 ## Need Help?
 
 - 📚 Browse the [documentation](./intro)
