@@ -1,8 +1,9 @@
 packages:
-  - agent
-  - landing+docs
-  - server
-  - ui
+- agent
+- landing+docs
+- server
+- ui
+
 allowBuilds:
   '@parcel/watcher': false
   '@prisma/engines': true
@@ -12,3 +13,29 @@ allowBuilds:
   esbuild: false
   prisma: true
   unrs-resolver: false
+
+minimumReleaseAgeExclude:
+- '@fastify/request-context@7.0.0'
+- '@nuxtjs/color-mode@4.0.1'
+- '@swc/core-darwin-arm64@1.15.41'
+- '@swc/core-darwin-x64@1.15.41'
+- '@swc/core-linux-arm-gnueabihf@1.15.41'
+- '@swc/core-linux-arm64-gnu@1.15.41'
+- '@swc/core-linux-arm64-musl@1.15.41'
+- '@swc/core-linux-ppc64-gnu@1.15.41'
+- '@swc/core-linux-s390x-gnu@1.15.41'
+- '@swc/core-linux-x64-gnu@1.15.41'
+- '@swc/core-linux-x64-musl@1.15.41'
+- '@swc/core-win32-arm64-msvc@1.15.41'
+- '@swc/core-win32-ia32-msvc@1.15.41'
+- '@swc/core-win32-x64-msvc@1.15.41'
+- '@swc/core@1.15.41'
+- '@turbo/darwin-64@2.9.17'
+- '@turbo/darwin-arm64@2.9.17'
+- '@turbo/linux-64@2.9.17'
+- '@turbo/linux-arm64@2.9.17'
+- '@turbo/windows-64@2.9.17'
+- '@turbo/windows-arm64@2.9.17'
+- turbo@2.9.17
+
+minimumReleaseAgeStrict: true

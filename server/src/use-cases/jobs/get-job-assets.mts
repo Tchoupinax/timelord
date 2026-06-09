@@ -1,4 +1,4 @@
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import fs from "fs";
 import path from "path";
@@ -63,9 +63,11 @@ export async function getJobAssets(
       );
       reply.header("Content-Type", "application/zip");
 
-      const archive = archiver("zip", { zlib: { level: 9 } });
+      const archive = new ZipArchive({ zlib: { level: 9 } });
+
       archive.pipe(reply.raw);
       archive.directory(folder, false);
+
       await archive.finalize();
     } else {
       reply.send({ msg: "No assets found" });
