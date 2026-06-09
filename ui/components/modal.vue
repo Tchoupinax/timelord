@@ -49,9 +49,8 @@
 </template>
 
 <script lang="ts">
-import type { PropType } from "vue";
-
 import * as bodyScrollLock from "body-scroll-lock";
+import type { PropType } from "vue";
 const disableBodyScroll = bodyScrollLock.disableBodyScroll;
 const enableBodyScroll = bodyScrollLock.enableBodyScroll;
 

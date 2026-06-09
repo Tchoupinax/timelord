@@ -103,7 +103,6 @@
 
 <script setup lang="ts">
 import type { PropType } from "vue";
-
 import { ref } from "vue";
 
 import type { GitConfig } from "../../server/prisma/generated/prisma";

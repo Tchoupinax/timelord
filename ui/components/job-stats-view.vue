@@ -223,10 +223,9 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from "vue";
-
 import { CronExpressionParser } from "cron-parser";
 import { format } from "timeago.js";
+import type { PropType } from "vue";
 
 import type { ExternalJob } from "~/types/external-job";
 
@@ -439,15 +438,15 @@ const performDelayedSentence = (job: GroupedJob): string => {
   const minutes = totalMinutes % 60;
 
   const parts: string[] = [];
-  if (days > 0) parts.push(unit(days, 'day', 'days'));
-  if (hours > 0) parts.push(unit(hours, 'hour', 'hours'));
-  if (minutes > 0) parts.push(unit(minutes, 'minute', 'minutes'));
+  if (days > 0) {parts.push(unit(days, "day", "days"));}
+  if (hours > 0) {parts.push(unit(hours, "hour", "hours"));}
+  if (minutes > 0) {parts.push(unit(minutes, "minute", "minutes"));}
 
   if (parts.length === 0) {
-    return 'for less than a minute';
+    return "for less than a minute";
   }
 
-  return `for ${parts.join(' and ')}`;
+  return `for ${parts.join(" and ")}`;
 };
 </script>
 

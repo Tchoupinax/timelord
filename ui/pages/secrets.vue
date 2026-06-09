@@ -272,8 +272,9 @@
 
 <script lang="ts">
 import { useRuntimeConfig } from "#app";
+
 import { format } from "timeago.js";
-import { ref, onMounted } from "vue";
+import { onMounted,ref } from "vue";
 
 import type { Secret } from "../../server/prisma/generated/prisma";
 
