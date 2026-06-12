@@ -5,7 +5,7 @@ ARG CI_PIPELINE_CREATED
 ENV CI_COMMIT_SHA=$CI_COMMIT_SHA
 ENV CI_PIPELINE_CREATED=$CI_PIPELINE_CREATED
 
-RUN corepack enable && corepack prepare pnpm@10.29.1 --activate
+RUN corepack enable && corepack prepare pnpm --activate
 
 RUN addgroup -S -g 1001 timelord && \
     adduser -S -u 1001 -G timelord timelord

@@ -53,6 +53,7 @@
               Dashboard
             </NuxtLink>
 
+            <NavLinkActivity />
             <NavLinkAgents />
 
             <NuxtLink
