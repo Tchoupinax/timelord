@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="jsonObject"
+    v-if="isOpen"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
   >
     <div
@@ -19,7 +19,10 @@
       </div>
 
       <div class="h-[calc(100%-45px)] p-2 pt-4 overflow-auto bg-gray-50">
-        <div v-html="jsonObject"></div>
+        <div v-if="jsonObject" v-html="jsonObject"></div>
+        <p v-else class="px-4 text-sm text-neutral-500 dark:text-gray-400">
+          No logs for this job.
+        </p>
       </div>
     </div>
   </div>
@@ -38,34 +41,50 @@ export default {
   emits: ["close"],
   data() {
     return {
+      isOpen: true,
       logs: "",
       jsonObject: "",
     };
   },
   async mounted() {
-    const shiki = await getHighlighter({
-      themes: ["nord", "dark-plus"],
-      langs: ["javascript"],
-    });
-
-    await shiki.loadTheme("vitesse-light");
-    await shiki.loadLanguage("bash");
-
     const config = useRuntimeConfig();
-    this.logs = await fetch(
-      `${config.public.apiEndpoint}/logs?jobId=${this.$props.jobId}`,
-      {
-        credentials: "include",
-      },
-    ).then(res => res.text());
 
-    this.logs += "\n";
+    try {
+      const response = await fetch(
+        `${config.public.apiEndpoint}/logs?jobId=${this.$props.jobId}`,
+        {
+          credentials: "include",
+        },
+      );
 
-    this.jsonObject = shiki.codeToHtml(this.logs, {
-      theme: "none",
-      lang: "",
-      defaultColor: "light",
-    });
+      if (!response.ok) {
+        throw new Error(`Failed to load logs (${response.status})`);
+      }
+
+      this.logs = await response.text();
+
+      if (!this.logs.trim()) {
+        return;
+      }
+
+      const shiki = await getHighlighter({
+        themes: ["nord", "dark-plus"],
+        langs: ["javascript"],
+      });
+
+      await shiki.loadTheme("vitesse-light");
+      await shiki.loadLanguage("bash");
+
+      this.logs += "\n";
+
+      this.jsonObject = shiki.codeToHtml(this.logs, {
+        theme: "none",
+        lang: "",
+        defaultColor: "light",
+      });
+    } catch (error) {
+      console.error("Failed to load job logs:", error);
+    }
 
     document.addEventListener("keydown", evt => {
       if (evt.key === "Escape") {
