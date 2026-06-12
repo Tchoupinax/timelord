@@ -23,6 +23,7 @@ import { clearJobQueue } from "./use-cases/jobs/clear-job-queue.mts";
 import { getJob } from "./use-cases/jobs/get-job/index.mts";
 import { getJobAssets } from "./use-cases/jobs/get-job-assets.mts";
 import { listJobs } from "./use-cases/jobs/list-jobs.mts";
+import { listActivity } from "./use-cases/activity/list-activity.mts";
 import { listLogs } from "./use-cases/logs/list-logs.mts";
 import { pushLogs } from "./use-cases/logs/push-logs.mts";
 import { logout } from "./use-cases/oidc/logout.mts";
@@ -159,6 +160,7 @@ export function router(fastify: FastifyInstance) {
     fastify.get("/agents", listAgents);
     fastify.get("/git-configs", listGitConfigs);
     fastify.get("/jobs", listJobs);
+    fastify.get("/activity", listActivity);
     fastify.get("/logs", listLogs);
     fastify.get("/secrets", listSecrets);
     fastify.post("/agents", createAgent);
