@@ -67,6 +67,7 @@
   },
   "imports": {
     "#prisma": "./prisma/generated/prisma/index.d.ts",
-    "#prisma-run": "./prisma/generated/prisma/index.js"
+    "#prisma-run": "./prisma/generated/prisma/index.js",
+    "#src/*": "./src/*"
   }
 }

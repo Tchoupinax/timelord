@@ -9,3 +9,4 @@ server/cron
 server/tmp/*
 
 server/prisma/generated/*
+.pnpm-store

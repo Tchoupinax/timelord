@@ -3,10 +3,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import vault from "node-vault";
 
-import { logger } from "../../../logger.mts";
-import { prisma } from "../../../prisma-client.mts";
-import { getRobotStore } from "../../../store.mts";
-import { env } from "../../../tools/env.mts";
+import { logger } from "#src/logger.mts";
+import { prisma } from "#src/prisma-client.mts";
+import { getRobotStore } from "#src/store.mts";
+import { env } from "#src/tools/env.mts";
 
 const options = {
   apiVersion: "v1",

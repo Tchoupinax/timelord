@@ -410,11 +410,11 @@
 
 <script lang="ts" setup>
 import { useRuntimeConfig } from "#app";
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 
-import type { ExternalJob } from "~/types/external-job";
+import { computed, onMounted, onUnmounted,ref, watch } from "vue";
 
 import type { Agent } from "../../server/prisma/generated/prisma";
+import type { ExternalJob } from "~/types/external-job";
 
 const agentCreationModalOpened = ref(false);
 const agentCreationName = ref("");
@@ -514,7 +514,7 @@ const hasActiveJobs = computed(() =>
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 const startPolling = () => {
-  if (pollInterval) return;
+  if (pollInterval) {return;}
   pollInterval = setInterval(refreshJobs, 3000);
 };
 

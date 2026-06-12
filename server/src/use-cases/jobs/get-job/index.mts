@@ -4,10 +4,10 @@ import type { GitConfig } from "#prisma";
 
 import fs from "fs";
 
-import { extractMetadata } from "../../../functions/extract-metadata.mts";
-import { logger } from "../../../logger.mts";
-import { prisma } from "../../../prisma-client.mts";
-import { getRobotStore } from "../../../store.mts";
+import { extractMetadata } from "#src/functions/extract-metadata.mts";
+import { logger } from "#src/logger.mts";
+import { prisma } from "#src/prisma-client.mts";
+import { getRobotStore } from "#src/store.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
 

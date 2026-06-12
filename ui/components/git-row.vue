@@ -155,9 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from "vue";
-
 import { format } from "timeago.js";
+import type { PropType } from "vue";
 
 import type { GitConfig } from "../../server/prisma/generated/prisma";
 

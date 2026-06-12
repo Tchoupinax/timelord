@@ -310,6 +310,7 @@
 
 <script lang="ts" setup>
 import { useRuntimeConfig } from "#app";
+
 import { ref } from "vue";
 
 import type { GitConfig } from "../../server/prisma/generated/prisma";
@@ -380,7 +381,7 @@ const forceRefreshGitconfigs = async () => {
   } finally {
     const elapsed = Date.now() - startedAt;
     if (elapsed < FORCE_REFRESH_MIN_SPIN_MS) {
-      await new Promise((r) =>
+      await new Promise(r =>
         setTimeout(r, FORCE_REFRESH_MIN_SPIN_MS - elapsed),
       );
     }
