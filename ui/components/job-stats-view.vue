@@ -27,6 +27,28 @@
             🚨 Delayed {{ performDelayedSentence(job) }}
           </p>
 
+          <p
+            v-if="nextLaunchInfo(job)"
+            v-tippy="{ content: nextLaunchInfo(job)!.untilLabel }"
+            class="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400 font-handwriting"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-3.5 h-3.5 mr-1 shrink-0"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+              />
+            </svg>
+            Next launch · {{ nextLaunchInfo(job)!.dateLabel }}
+          </p>
+
           <div class="flex justify-between w-full mt-4">
             <span
               class="inline-flex items-center px-3 py-1 text-xs text-gray-800 border border-gray-300 rounded-2xl font-handwriting bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
@@ -407,21 +429,63 @@ const computeJobStats = (job: GroupedJob) => {
   };
 };
 
-const getCronInterval = (job: GroupedJob): number => {
+const getNextLaunchDate = (job: GroupedJob): Date | null => {
   const cronString = job.jobs[0]?.cron;
   if (cronString && cronString.match(cronRegex)) {
-    const parser = CronExpressionParser.parse(cronString);
-
-    const first = parser.next().toDate();
-    const second = parser.next().toDate();
-
-    // @ts-expect-error
-    const intervalMs = second - first;
-    const intervalMin = intervalMs / 60000;
-    return intervalMin;
+    return CronExpressionParser.parse(cronString).next().toDate();
   }
 
-  return +Infinity;
+  return null;
+};
+
+const getCronInterval = (job: GroupedJob): number => {
+  const nextLaunch = getNextLaunchDate(job);
+  if (!nextLaunch) {
+    return +Infinity;
+  }
+
+  const parser = CronExpressionParser.parse(job.jobs[0]!.cron!);
+  const second = parser.next().toDate();
+
+  const intervalMs = second.getTime() - nextLaunch.getTime();
+  return intervalMs / 60000;
+};
+
+const formatNextLaunchDate = (date: Date): string =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+
+const formatTimeUntil = (date: Date): string => {
+  const totalMinutes = Math.floor((date.getTime() - Date.now()) / 1000 / 60);
+
+  if (totalMinutes <= 0) {
+    return "in less than a minute";
+  }
+
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts: string[] = [];
+  if (days > 0) {parts.push(unit(days, "day", "days"));}
+  if (hours > 0) {parts.push(unit(hours, "hour", "hours"));}
+  if (minutes > 0) {parts.push(unit(minutes, "minute", "minutes"));}
+
+  return `in ${parts.join(" and ")}`;
+};
+
+const nextLaunchInfo = (job: GroupedJob) => {
+  const date = getNextLaunchDate(job);
+  if (!date) {
+    return null;
+  }
+
+  return {
+    dateLabel: formatNextLaunchDate(date),
+    untilLabel: formatTimeUntil(date),
+  };
 };
 
 const unit = (n: number, one: string, many: string): string =>
