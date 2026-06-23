@@ -8,8 +8,6 @@ export type Metadata = {
   keepLastCount?: number;
 };
 
-const SECONDS = 1000;
-
 export function extractMetadata(file: string): Metadata {
   const now = new Date();
   let nextDate: Date | undefined = undefined;
@@ -24,13 +22,15 @@ export function extractMetadata(file: string): Metadata {
   if (found && found?.length > 0) {
     cron = found[1] as string;
 
-    const interval = CronExpressionParser.parse(cron);
-    nextDate = interval.next().toDate();
+    const interval = CronExpressionParser.parse(cron, { currentDate: now });
+    const periodStart = interval.prev().toDate();
+    const periodEnd = interval.next().toDate();
 
-    const diff = Math.abs(nextDate.getTime() - now.getTime());
-    if (diff < 30 * SECONDS) {
-      cronIsActive = true;
-    }
+    // Keep the job eligible for the whole cron period, not only 30 seconds
+    // before the next fire. The old window caused missed runs when every agent
+    // was busy during that short interval.
+    nextDate = periodStart;
+    cronIsActive = now >= periodStart && now <= periodEnd;
   }
 
   function capitalizeFirstLetter(str: string): string {

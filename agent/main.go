@@ -47,35 +47,39 @@ func processJob(apiUrl string) {
 	log.Debug().Str("version", version).Msg("Start job processing task in background")
 
 	for range time.Tick(time.Second * time.Duration(10)) {
-		go func() {
-			log.Debug().Str("url", apiUrl).Str("hostname", api.GetHostname()).Msg("Get job")
+		if runningJobs.Load() > 0 {
+			log.Debug().Msg("Agent busy, skipping job poll")
+			continue
+		}
 
-			data := getJob(apiUrl + "/job")
-			if data != nil {
-				runningJobs.Add(1)
-				defer runningJobs.Add(-1)
+		log.Debug().Str("url", apiUrl).Str("hostname", api.GetHostname()).Msg("Get job")
 
-				result := bash.Exec(data.File, apiUrl, data)
-				log.Debug().Msg(data.Id)
+		data := getJob(apiUrl + "/job")
+		if data != nil {
+			runningJobs.Add(1)
 
-				api.PushResult(
-					apiUrl+"/job",
-					data,
-					result.Status,
-					result.FinalState,
-				)
+			result := bash.Exec(data.File, apiUrl, data)
+			log.Debug().Msg(data.Id)
 
-				// At the end of the process, clean assets
-				log.Info().Msg("Cleaning")
-				err := os.RemoveAll(data.ExtractPath)
-				if err != nil {
-					log.Error().Msg("Error while removing assets")
-					fmt.Println(err)
-				}
+			api.PushResult(
+				apiUrl+"/job",
+				data,
+				result.Status,
+				result.FinalState,
+			)
+
+			// At the end of the process, clean assets
+			log.Info().Msg("Cleaning")
+			err := os.RemoveAll(data.ExtractPath)
+			if err != nil {
+				log.Error().Msg("Error while removing assets")
+				fmt.Println(err)
 			}
 
-			log.Info().Msg("Waiting for next job")
-		}()
+			runningJobs.Add(-1)
+		}
+
+		log.Info().Msg("Waiting for next job")
 	}
 }
 
