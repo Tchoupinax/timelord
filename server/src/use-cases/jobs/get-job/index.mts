@@ -167,6 +167,20 @@ async function getOneJob(
     }
   }
 
+  const agentRunningJob = await prisma.job.findFirst({
+    where: {
+      hostname: identity,
+      userId: store.userId,
+      statusCode: -1,
+    },
+  });
+
+  if (agentRunningJob) {
+    throw new Error(
+      `Agent "${identity}" is busy with "${agentRunningJob.title}"`,
+    );
+  }
+
   for (const [index, metadata] of metadataFiles.entries()) {
     if (metadata.cronIsActive) {
       const job = await prisma.job.findFirst({
