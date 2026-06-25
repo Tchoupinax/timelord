@@ -15,13 +15,7 @@
           </h3>
 
           <p
-            v-if="
-              getCronInterval(job) <
-              Math.floor(
-                // @ts-expect-error
-                (new Date() - new Date(job.jobs[0]?.createdAt)) / 1000 / 60,
-              )
-            "
+            v-if="isJobDelayed(job)"
             class="my-2 text-xs text-gray-500 text-red-400"
           >
             🚨 Delayed {{ performDelayedSentence(job) }}
@@ -429,6 +423,40 @@ const computeJobStats = (job: GroupedJob) => {
   };
 };
 
+const getExpectedNextRunAfter = (
+  cronString: string,
+  after: Date,
+): Date =>
+  CronExpressionParser.parse(cronString, { currentDate: after })
+    .next()
+    .toDate();
+
+const getLastExecution = (job: GroupedJob): ExternalJob | undefined =>
+  displayedJobs(job).at(-1);
+
+const isJobDelayed = (job: GroupedJob): boolean => {
+  if (!hasBeenExecutedAtLeastOnce(job)) {
+    return false;
+  }
+
+  const cronString = job.jobs[0]?.cron;
+  if (!cronString?.match(cronRegex)) {
+    return false;
+  }
+
+  const lastExec = getLastExecution(job);
+  if (!lastExec || lastExec.statusCode === -1) {
+    return false;
+  }
+
+  const expectedNext = getExpectedNextRunAfter(
+    cronString,
+    new Date(lastExec.updatedAt),
+  );
+
+  return expectedNext.getTime() < Date.now();
+};
+
 const getNextLaunchDate = (job: GroupedJob): Date | null => {
   const cronString = job.jobs[0]?.cron;
   if (cronString && cronString.match(cronRegex)) {
@@ -436,19 +464,6 @@ const getNextLaunchDate = (job: GroupedJob): Date | null => {
   }
 
   return null;
-};
-
-const getCronInterval = (job: GroupedJob): number => {
-  const nextLaunch = getNextLaunchDate(job);
-  if (!nextLaunch) {
-    return +Infinity;
-  }
-
-  const parser = CronExpressionParser.parse(job.jobs[0]!.cron!);
-  const second = parser.next().toDate();
-
-  const intervalMs = second.getTime() - nextLaunch.getTime();
-  return intervalMs / 60000;
 };
 
 const formatNextLaunchDate = (date: Date): string =>
@@ -492,10 +507,15 @@ const unit = (n: number, one: string, many: string): string =>
   `${n} ${n === 1 ? one : many}`;
 
 const performDelayedSentence = (job: GroupedJob): string => {
-  const now = new Date().getTime();
-  // @ts-expect-error
-  const createdAt = new Date(job.jobs[0]?.createdAt).getTime();
-  const totalMinutes = Math.floor((now - createdAt) / 1000 / 60);
+  const cronString = job.jobs[0]!.cron!;
+  const lastExec = getLastExecution(job)!;
+  const expectedNext = getExpectedNextRunAfter(
+    cronString,
+    new Date(lastExec.updatedAt),
+  );
+  const totalMinutes = Math.floor(
+    (Date.now() - expectedNext.getTime()) / 1000 / 60,
+  );
 
   const days = Math.floor(totalMinutes / (24 * 60));
   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
