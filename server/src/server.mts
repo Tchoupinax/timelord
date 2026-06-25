@@ -30,7 +30,7 @@ export async function createServer() {
     };
   }
 
-  const fastify = Fastify({ logger: config });
+  const fastify = Fastify({ logger: config, disableRequestLogging: true });
   await fastify.register(router);
 
   return fastify;
