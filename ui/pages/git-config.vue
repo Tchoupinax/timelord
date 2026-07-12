@@ -194,7 +194,7 @@
             Repository Management
           </h2>
         </div>
-        <GitTable :git-configs="gitConfigs" />
+        <GitTable :git-configs="gitConfigs" @updated="handleGitConfigUpdated" />
       </div>
     </main>
 
@@ -338,6 +338,13 @@ const listGitConfigs = async (url: string) => {
     gitConfigs.value = await response.json();
   } catch {
     gitConfigs.value = [];
+  }
+};
+
+const handleGitConfigUpdated = (updated: GitConfig) => {
+  const index = gitConfigs.value.findIndex(config => config.id === updated.id);
+  if (index !== -1) {
+    gitConfigs.value[index] = updated;
   }
 };
 

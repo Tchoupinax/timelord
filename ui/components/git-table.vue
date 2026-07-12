@@ -54,7 +54,7 @@
         :git-config="gitConfig"
         :expanded="expandedConfigId === gitConfig.id"
         @select="toggleExpanded(gitConfig.id)"
-        @view-result="showResult"
+        @updated="handleUpdated"
       />
     </div>
 
@@ -93,11 +93,7 @@
       </p>
     </div>
 
-    <JobResultModal
-      v-if="selectedResult"
-      :job-id="selectedResult"
-      @close="selectedResult = null"
-    />
+    </div>
   </div>
 </template>
 
@@ -107,6 +103,8 @@ import { ref } from "vue";
 
 import type { GitConfig } from "../../server/prisma/generated/prisma";
 
+const emit = defineEmits<{ updated: [config: GitConfig] }>();
+
 defineProps({
   gitConfigs: {
     type: Array as PropType<Array<GitConfig>>,
@@ -114,12 +112,10 @@ defineProps({
   },
 });
 
-const selectedResult = ref(null);
 const expandedConfigId = ref<string | null>(null);
 
-// @ts-expect-error
-const showResult = result => {
-  selectedResult.value = result;
+const handleUpdated = (config: GitConfig) => {
+  emit("updated", config);
 };
 
 const toggleExpanded = (id: string) => {
