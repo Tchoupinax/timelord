@@ -24,6 +24,13 @@ type StoreRobot = {
 
 export const asyncLocalStorage = new AsyncLocalStorage<Store>();
 
+export class StoreUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StoreUnavailableError";
+  }
+}
+
 export function getMiddlewareStore(): Store {
   return asyncLocalStorage.getStore()!;
 }
@@ -34,7 +41,7 @@ export function getHumanStore(): StoreHuman {
     return store;
   }
 
-  throw new Error(
+  throw new StoreUnavailableError(
     "This store is not available here because user is not an human.",
   );
 }
@@ -45,7 +52,7 @@ export function getRobotStore(): StoreRobot {
     return store;
   }
 
-  throw new Error(
+  throw new StoreUnavailableError(
     "This store is not available here because user is not a robot.",
   );
 }
