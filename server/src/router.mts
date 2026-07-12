@@ -4,6 +4,7 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import fs from "fs";
 
 import { logger } from "./logger.mts";
+import { StoreUnavailableError } from "./store.mts";
 import { extractAgentMetadata } from "./middlewares/extract-agent-metadata.mts";
 import { extractHumanMetadata } from "./middlewares/extract-human-metadata.mts";
 import { prisma } from "./prisma-client.mts";
@@ -172,7 +173,14 @@ export function router(fastify: FastifyInstance) {
   });
 
   fastify.setErrorHandler(async (error, _, reply) => {
-    console.log("Global error caught", error);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(message);
+
+    if (error instanceof StoreUnavailableError) {
+      reply.status(403).send({ msg: "Not authorized" });
+      return;
+    }
+
     reply.status(500).send({ msg: "Error" });
   });
 
