@@ -92,8 +92,6 @@
         code.
       </p>
     </div>
-
-    </div>
   </div>
 </template>
 
