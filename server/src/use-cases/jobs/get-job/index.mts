@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 
 import type { GitConfig } from "#prisma";
-
-import fs from "fs";
-
 import { extractMetadata } from "#src/functions/extract-metadata.mts";
 import { logger } from "#src/logger.mts";
 import { prisma } from "#src/prisma-client.mts";
 import { getRobotStore } from "#src/store.mts";
+import { jobsDispatchedTotal } from "#src/tools/metrics.mts";
+
+import fs from "fs";
+
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
 
@@ -43,6 +44,8 @@ export async function getJob() {
     if (cronObject.title && cronObject.keepLastCount > -1) {
       await removeLastNthJob(cronObject.title, cronObject.keepLastCount);
     }
+
+    jobsDispatchedTotal.inc();
 
     return {
       id,

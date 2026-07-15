@@ -5,6 +5,7 @@ import { simpleGit } from "simple-git";
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
 import { env } from "../../tools/env.mts";
+import { gitRefreshTotal } from "../../tools/metrics.mts";
 import { getSshFilePath } from "../../tools/setup-ssh.mts";
 
 export async function refreshGitConfig() {
@@ -42,8 +43,10 @@ export async function refreshGitConfig() {
               id: config.id,
             },
           });
+          gitRefreshTotal.inc({ result: "success" });
         } catch (err) {
           logger.error(err);
+          gitRefreshTotal.inc({ result: "failure" });
 
           fs.rmSync(folder, { recursive: true, force: true });
           await cloneRepo(
@@ -82,7 +85,9 @@ async function cloneRepo(
       },
       where: { id: configId },
     });
+    gitRefreshTotal.inc({ result: "success" });
   } catch (err) {
     logger.error(err);
+    gitRefreshTotal.inc({ result: "failure" });
   }
 }
