@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
+import { jobsTimedOutTotal } from "../../tools/metrics.mts";
 
 export async function timeoutOldJobs(): Promise<void> {
   logger.info("Timeout old jobs");
@@ -24,6 +25,8 @@ export async function timeoutOldJobs(): Promise<void> {
         where: { id: job.id },
         data: { statusCode: 1, statusComment: "Job has timeout" },
       });
+
+      jobsTimedOutTotal.inc();
 
       logger.debug("Update done");
     }

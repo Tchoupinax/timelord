@@ -7,5 +7,8 @@ describe("GET /metrics", () => {
     expect(response.data).toContain("process_cpu_user_seconds_total");
     expect(response.data).toContain("process_cpu_system_seconds_total");
     expect(response.data).toContain("process_cpu_seconds_total");
+    expect(response.data).toContain("timelord_agents_online");
+    expect(response.data).toContain("timelord_job_queue_depth");
+    expect(response.data).toContain("timelord_http_requests_total");
   });
 });

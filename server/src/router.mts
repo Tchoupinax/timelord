@@ -7,10 +7,12 @@ import { logger } from "./logger.mts";
 import { StoreUnavailableError } from "./store.mts";
 import { extractAgentMetadata } from "./middlewares/extract-agent-metadata.mts";
 import { extractHumanMetadata } from "./middlewares/extract-human-metadata.mts";
+import { registerHttpMetrics } from "./middlewares/http-metrics.mts";
 import { prisma } from "./prisma-client.mts";
 import { env } from "./tools/env.mts";
-import { prometheus } from "./tools/metrics.mts";
+import { prometheus, recordJobCompletion } from "./tools/metrics.mts";
 import { setupSSH } from "./tools/setup-ssh.mts";
+import { listActivity } from "./use-cases/activity/list-activity.mts";
 import { createAgent } from "./use-cases/agents/create-agent.mts";
 import { deleteAgent } from "./use-cases/agents/delete-agent.mts";
 import { agentHeartbeat } from "./use-cases/agents/heartbeat.mts";
@@ -25,7 +27,6 @@ import { clearJobQueue } from "./use-cases/jobs/clear-job-queue.mts";
 import { getJob } from "./use-cases/jobs/get-job/index.mts";
 import { getJobAssets } from "./use-cases/jobs/get-job-assets.mts";
 import { listJobs } from "./use-cases/jobs/list-jobs.mts";
-import { listActivity } from "./use-cases/activity/list-activity.mts";
 import { listLogs } from "./use-cases/logs/list-logs.mts";
 import { pushLogs } from "./use-cases/logs/push-logs.mts";
 import { logout } from "./use-cases/oidc/logout.mts";
@@ -50,6 +51,7 @@ setInterval(() => {
 
 export function router(fastify: FastifyInstance) {
   fastify.register(fastifyRequestContext);
+  registerHttpMetrics(fastify);
   fastify.register(import("@fastify/cors"), {
     origin: env.UI_URL,
     credentials: true,
@@ -137,6 +139,8 @@ export function router(fastify: FastifyInstance) {
             },
             data,
           });
+
+          recordJobCompletion(body.statusCode, data.finalState);
         }
 
         return "OK";

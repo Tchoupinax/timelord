@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
 import { getHumanStore } from "../../store.mts";
+import { jobQueueAddedTotal } from "../../tools/metrics.mts";
 
 const payload = z.object({
   title: z.string(),
@@ -30,6 +31,8 @@ export async function addJobToQueue(
     await prisma.jobQueue.create({
       data,
     });
+
+    jobQueueAddedTotal.inc();
   } catch (err) {
     logger.error(err);
 
