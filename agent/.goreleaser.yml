@@ -24,19 +24,19 @@ archives:
   - goos: windows
     formats: [ "zip" ]
 
-#dockers_v2:
-#- images:
-#  - "ghcr.io/tchoupinax/timelord-agent"
-#  - "docker.io/tchoupinax/timelord-agent"
-#  tags:
-#  - "v{{ .Version }}"
-#  platforms:
-#  - linux/amd64
-#  # - linux/arm64
-#  labels:
-#    "org.opencontainers.image.created": "{{.Date}}"
-#    "org.opencontainers.image.description": "Agent"
-#    "org.opencontainers.image.name": "{{.ProjectName}}"
-#    "org.opencontainers.image.revision": "{{.FullCommit}}"
-#    "org.opencontainers.image.source": "{{.GitURL}}"
-#    "org.opencontainers.image.version": "{{.Version}}"
+dockers_v2:
+- images:
+  - "ghcr.io/tchoupinax/timelord-agent"
+  - "docker.io/tchoupinax/timelord-agent"
+  tags:
+  - "v{{ .Version }}"
+  platforms:
+  - linux/amd64
+  # - linux/arm64
+  labels:
+    "org.opencontainers.image.created": "{{.Date}}"
+    "org.opencontainers.image.description": "Agent"
+    "org.opencontainers.image.name": "{{.ProjectName}}"
+    "org.opencontainers.image.revision": "{{.FullCommit}}"
+    "org.opencontainers.image.source": "{{.GitURL}}"
+    "org.opencontainers.image.version": "{{.Version}}"
