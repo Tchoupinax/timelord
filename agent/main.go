@@ -34,6 +34,7 @@ func main() {
 			return runningJobs.Load() > 0
 		},
 	})
+
 	go processJob(apiUrl)
 	go heartbeat(apiUrl)
 
