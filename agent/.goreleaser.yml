@@ -25,7 +25,9 @@ archives:
     formats: [ "zip" ]
 
 dockers_v2:
-- images:
+- ids:
+  - timelord-agent
+  images:
   - "ghcr.io/tchoupinax/timelord-agent"
   - "docker.io/tchoupinax/timelord-agent"
   tags:

@@ -1,9 +1,11 @@
 FROM alpine:3.23.5
 
-RUN addgroup -S -g 999 timelord && \
-    adduser -S -u 999 -G timelord timelord
+ARG TARGETPLATFORM
 
-COPY main /usr/bin/timelord
+RUN addgroup -S -g 1001 timelord && \
+    adduser -S -u 1001 -G timelord timelord
+
+COPY $TARGETPLATFORM/timelord-agent /usr/bin/timelord
 
 RUN chown timelord:timelord /usr/bin/timelord
 
