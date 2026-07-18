@@ -1,4 +1,4 @@
-FROM alpine:3.23.4
+FROM alpine:3.23.5
 
 RUN addgroup -S -g 999 timelord && \
     adduser -S -u 999 -G timelord timelord
