@@ -58,22 +58,12 @@ COPY --from=builder --chown=timelord:timelord /deploy /app
 
 USER root
 
-RUN rm -rf \
-      node_modules/.pnpm/@prisma+studio-core* \
-      node_modules/.pnpm/@prisma+dev@* \
-      node_modules/.pnpm/typescript@* \
-      node_modules/.pnpm/react-dom@* \
-      node_modules/.pnpm/react@* \
-      node_modules/.pnpm/chart.js@* \
-      node_modules/.pnpm/prisma@* \
-      node_modules/.pnpm/@electric-sql+pglite@* \
-      node_modules/.pnpm/effect@* \
-    && case "$TARGETARCH" in \
-         amd64) rm -rf node_modules/.pnpm/@esbuild+linux-arm64* node_modules/.pnpm/@esbuild+darwin* ;; \
-         arm64) rm -rf node_modules/.pnpm/@esbuild+linux-x64* node_modules/.pnpm/@esbuild+darwin* ;; \
-       esac \
-    && find node_modules -type f \( -name "*.map" -o -name "*.md" \) -delete 2>/dev/null || true \
-    && chown -R timelord:timelord /app
+RUN case "$TARGETARCH" in \
+      amd64) rm -rf node_modules/.pnpm/@esbuild+linux-arm64* node_modules/.pnpm/@esbuild+darwin* ;; \
+      arm64) rm -rf node_modules/.pnpm/@esbuild+linux-x64* node_modules/.pnpm/@esbuild+darwin* ;; \
+    esac \
+ && find node_modules -type f \( -name "*.map" -o -name "*.md" \) -delete 2>/dev/null || true \
+ && chown -R timelord:timelord /app
 
 USER timelord
 
