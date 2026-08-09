@@ -1,4 +1,10 @@
-FROM node:24-alpine AS builder
+# syntax=docker/dockerfile:1
+
+# Build on the native host arch (BUILDPLATFORM) so pnpm/prisma do not run under QEMU.
+# supportedArchitectures still pulls optional deps for TARGETARCH.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
+
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -7,7 +13,18 @@ RUN corepack enable && corepack prepare pnpm --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json server/
 
-RUN pnpm install --frozen-lockfile --filter @timelord/server
+# Docker TARGETARCH (amd64/arm64) -> Node/pnpm CPU (x64/arm64)
+RUN case "$TARGETARCH" in \
+      amd64) PNPM_CPU=x64 ;; \
+      arm64) PNPM_CPU=arm64 ;; \
+      *) PNPM_CPU="$TARGETARCH" ;; \
+    esac \
+ && printf '%s\n' \
+      "supportedArchitectures.os=linux" \
+      "supportedArchitectures.cpu=${PNPM_CPU}" \
+      "supportedArchitectures.libc=musl" \
+      > .npmrc \
+ && pnpm install --frozen-lockfile --filter @timelord/server
 
 COPY server/prisma server/prisma
 COPY server/prisma.config.mts server/

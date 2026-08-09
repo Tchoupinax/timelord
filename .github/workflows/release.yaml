@@ -74,6 +74,7 @@ jobs:
   build-server:
     name: "🟣 Release server 🐳"
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -148,6 +149,8 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ steps.meta.outputs.tags }}
+        cache-from: type=gha,scope=timelord-server
+        cache-to: type=gha,mode=max,scope=timelord-server
         build-args: |
           CI_COMMIT_SHA=${{ github.ref_name }}
           CI_PIPELINE_CREATED=111111111
