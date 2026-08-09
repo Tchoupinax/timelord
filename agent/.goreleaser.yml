@@ -13,8 +13,10 @@ builds:
   - arm64
   id: timelord-agent
   binary: timelord-agent
+  flags:
+  - -trimpath
   ldflags:
-  - -s -w -trimpath -X "main.version={{.Version}}" -X "main.commit={{.FullCommit}}" -X "main.buildDate={{.Date}}"
+  - -s -w -X "main.version={{.Version}}" -X "main.commit={{.FullCommit}}" -X "main.buildDate={{.Date}}"
 
 archives:
 - formats: [ "tar.gz" ]
