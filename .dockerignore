@@ -1,0 +1,17 @@
+**/node_modules
+**/.turbo
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+
+ui/
+agent/
+landing+docs/
+
+server/test/
+server/dist/
+server/eslint.config.mjs
+server/tsconfig.json
+server/tsconfig.build.json
+server/README.md
