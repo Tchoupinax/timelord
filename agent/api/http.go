@@ -4,10 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
+
+// Without a timeout, a single unanswered request hangs its caller forever,
+// which is enough to freeze the polling loop or leak a log upload per line.
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+		MaxIdleConnsPerHost:   8,
+	},
+}
 
 func ApiGet(
 	url string,
@@ -21,8 +35,7 @@ func ApiGet(
 		req.Header.Set(key, value)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return []byte{}, err
@@ -58,8 +71,7 @@ func ApiPost(
 		req.Header.Set(key, value)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return []byte{}, err

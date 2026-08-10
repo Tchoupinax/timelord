@@ -57,30 +57,40 @@ func processJob(apiUrl string) {
 
 		data := getJob(apiUrl + "/job")
 		if data != nil {
-			runningJobs.Add(1)
-
-			result := bash.Exec(data.File, apiUrl, data)
-			log.Debug().Msg(data.Id)
-
-			api.PushResult(
-				apiUrl+"/job",
-				data,
-				result.Status,
-				result.FinalState,
-			)
-
-			// At the end of the process, clean assets
-			log.Info().Msg("Cleaning")
-			err := os.RemoveAll(data.ExtractPath)
-			if err != nil {
-				log.Error().Msg("Error while removing assets")
-				fmt.Println(err)
-			}
-
-			runningJobs.Add(-1)
+			runJob(apiUrl, data)
 		}
 
 		log.Info().Msg("Waiting for next job")
+	}
+}
+
+func runJob(apiUrl string, data *api.ResponseData) {
+	runningJobs.Add(1)
+	// The counter gates job polling and the self-update: it must come back down
+	// whatever happens, otherwise the agent stays busy forever.
+	defer runningJobs.Add(-1)
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().Any("panic", r).Msg("Job execution panicked")
+			api.PushResult(apiUrl+"/job", data, 1, "")
+		}
+	}()
+
+	result := bash.Exec(data.File, apiUrl, data)
+	log.Debug().Msg(data.Id)
+
+	api.PushResult(
+		apiUrl+"/job",
+		data,
+		result.Status,
+		result.FinalState,
+	)
+
+	// At the end of the process, clean assets
+	log.Info().Msg("Cleaning")
+	if err := os.RemoveAll(data.ExtractPath); err != nil {
+		log.Error().Err(err).Msg("Error while removing assets")
 	}
 }
 
