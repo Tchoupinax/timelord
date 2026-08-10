@@ -21,7 +21,7 @@ import (
 
 const (
 	latestReleaseURL         = "https://api.github.com/repos/Tchoupinax/timelord/releases/latest"
-	autoUpdateInterval       = time.Hour
+	autoUpdateInterval       = time.Minute * 10
 	autoUpdateEnabledEnvName = "AGENT_AUTO_UPDATE"
 	releaseBinaryName        = "timelord-agent"
 )
