@@ -5,7 +5,11 @@ import dayjs from "dayjs";
 
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
+import { env } from "../../tools/env.mts";
 import { jobsTimedOutTotal } from "../../tools/metrics.mts";
+import { parseJobTimeoutMinutes } from "../../tools/parse-job-timeout.mts";
+
+const jobTimeoutMinutes = parseJobTimeoutMinutes(env.JOB_DEFAULT_TIMEOUT);
 
 export async function timeoutOldJobs(): Promise<void> {
   logger.info("Timeout old jobs");
@@ -18,7 +22,7 @@ export async function timeoutOldJobs(): Promise<void> {
 
   for (const job of jobs) {
     const diff = dayjs().diff(dayjs(job.createdAt), "m");
-    if (diff > 30) {
+    if (diff >= jobTimeoutMinutes) {
       logger.debug(job, "Job found");
 
       await prisma.job.update({

@@ -4,6 +4,7 @@ export type Metadata = {
   cron?: string;
   cronIsActive: boolean;
   nextDate?: string;
+  periodEnd?: string;
   title: string;
   keepLastCount?: number;
 };
@@ -11,6 +12,7 @@ export type Metadata = {
 export function extractMetadata(file: string): Metadata {
   const now = new Date();
   let nextDate: Date | undefined = undefined;
+  let periodEnd: Date | undefined = undefined;
   let cron = "";
   let title = "";
   let keepLastCount = -1;
@@ -24,7 +26,7 @@ export function extractMetadata(file: string): Metadata {
 
     const interval = CronExpressionParser.parse(cron, { currentDate: now });
     const periodStart = interval.prev().toDate();
-    const periodEnd = interval.next().toDate();
+    periodEnd = interval.next().toDate();
 
     // Keep the job eligible for the whole cron period, not only 30 seconds
     // before the next fire. The old window caused missed runs when every agent
@@ -63,6 +65,7 @@ export function extractMetadata(file: string): Metadata {
   return {
     cron,
     nextDate: nextDate?.toISOString() ?? "",
+    periodEnd: periodEnd?.toISOString() ?? "",
     cronIsActive,
     title,
     keepLastCount,
