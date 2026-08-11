@@ -16,6 +16,8 @@ echo "Test file"`;
       cronIsActive: expect.any(Boolean) as boolean,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       nextDate: expect.any(String),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      periodEnd: expect.any(String),
       title: "Test cron",
       keepLastCount: -1,
     } satisfies Metadata);
@@ -31,6 +33,7 @@ echo "Test file"`;
       cron: "",
       cronIsActive: false,
       nextDate: "",
+      periodEnd: "",
       title: "Test no cron",
       keepLastCount: -1,
     } satisfies Metadata);

@@ -1,14 +1,19 @@
 import { randomUUID } from "node:crypto";
 
 import type { GitConfig } from "#prisma";
-import { extractMetadata } from "#src/functions/extract-metadata.mts";
+import { extractMetadata, type Metadata } from "#src/functions/extract-metadata.mts";
 import { logger } from "#src/logger.mts";
 import { prisma } from "#src/prisma-client.mts";
 import { getRobotStore } from "#src/store.mts";
+import { env } from "#src/tools/env.mts";
 import { jobsDispatchedTotal } from "#src/tools/metrics.mts";
 
 import fs from "fs";
 
+import {
+  getActiveCronJobs,
+  isCronPastStartWindow,
+} from "./cron-priority.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
 
@@ -74,100 +79,14 @@ async function getOneJob(
 ): Promise<Cron> {
   const store = getRobotStore();
 
-  // Firstly, we check if a job was queued for this userId.
-  const queuedJob = await prisma.jobQueue.findFirst({
-    where: {
-      userId: store.userId,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    select: {
-      title: true,
-    },
-  });
-
   const files = getSriptsByIdentity(configs, identity);
   if (files.length == 0) {
     throw new Error("No files detected for this identity");
   }
 
-  // Extract all file metadata to have an overview
-  const metadataFiles = [];
+  const metadataFiles: Array<Metadata> = [];
   for (const f of files) {
     metadataFiles.push(extractMetadata(fs.readFileSync(f, "utf8")));
-  }
-
-  const cronObject: Cron = {
-    file: "",
-    cron: "",
-    title: "",
-    nextDate: "",
-    keepLastCount: -1,
-  };
-
-  if (queuedJob && metadataFiles.map(m => m.title).includes(queuedJob?.title)) {
-    const agentRunningJob = await prisma.job.findFirst({
-      where: {
-        hostname: identity,
-        userId: store.userId,
-        statusCode: -1,
-      },
-    });
-
-    if (agentRunningJob) {
-      logger.debug(
-        `Agent "${identity}" already has a running job ("${agentRunningJob.title}"), queue job "${queuedJob.title}" will not be taken`,
-      );
-    } else {
-      logger.info(`Queued job detected "${queuedJob.title}"`);
-
-      const job = metadataFiles.find(m => m.title === queuedJob.title)!;
-      const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
-      try {
-        const file = await injectSecret(
-          fs.readFileSync(files[jobIndex] as string, "utf8"),
-        );
-
-        cronObject.title = job.title;
-        cronObject.cron = "Manual";
-        cronObject.nextDate = job.nextDate;
-        cronObject.keepLastCount = job.keepLastCount ?? -1;
-        cronObject.file = file;
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        logger.error(
-          { err: error, jobTitle: job.title },
-          "Queued job could not be prepared",
-        );
-
-        await markJobAsSelectionError({
-          cron: "Manual",
-          nextDate: job.nextDate,
-          title: job.title,
-          errorMessage,
-        });
-        await prisma.jobQueue.delete({
-          where: {
-            jobId: {
-              title: job.title,
-              userId: store.userId,
-            },
-          },
-        });
-        return await getOneJob(configs, identity);
-      }
-
-      await prisma.jobQueue.delete({
-        where: {
-          jobId: {
-            title: job.title,
-            userId: store.userId,
-          },
-        },
-      });
-      return cronObject;
-    }
   }
 
   const agentRunningJob = await prisma.job.findFirst({
@@ -184,70 +103,166 @@ async function getOneJob(
     );
   }
 
-  for (const [index, metadata] of metadataFiles.entries()) {
-    if (metadata.cronIsActive) {
-      const job = await prisma.job.findFirst({
+  const scheduledJob = await trySelectCronJob(metadataFiles, files, identity);
+  if (scheduledJob) {
+    return scheduledJob;
+  }
+
+  const queuedJob = await prisma.jobQueue.findFirst({
+    where: {
+      userId: store.userId,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      title: true,
+    },
+  });
+
+  const cronObject: Cron = {
+    file: "",
+    cron: "",
+    title: "",
+    nextDate: "",
+    keepLastCount: -1,
+  };
+
+  if (queuedJob && metadataFiles.map(m => m.title).includes(queuedJob?.title)) {
+    logger.info(`Queued job detected "${queuedJob.title}"`);
+
+    const job = metadataFiles.find(m => m.title === queuedJob.title)!;
+    const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
+    try {
+      const file = await injectSecret(
+        fs.readFileSync(files[jobIndex] as string, "utf8"),
+      );
+
+      cronObject.title = job.title;
+      cronObject.cron = "Manual";
+      cronObject.nextDate = job.nextDate;
+      cronObject.keepLastCount = job.keepLastCount ?? -1;
+      cronObject.file = file;
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      logger.error(
+        { err: error, jobTitle: job.title },
+        "Queued job could not be prepared",
+      );
+
+      await markJobAsSelectionError({
+        cron: "Manual",
+        nextDate: job.nextDate,
+        title: job.title,
+        errorMessage,
+      });
+      await prisma.jobQueue.delete({
+        where: {
+          jobId: {
+            title: job.title,
+            userId: store.userId,
+          },
+        },
+      });
+      return await getOneJob(configs, identity);
+    }
+
+    await prisma.jobQueue.delete({
+      where: {
+        jobId: {
+          title: job.title,
+          userId: store.userId,
+        },
+      },
+    });
+    return cronObject;
+  }
+
+  throw new Error(
+    `No cron object was found for this agent, aborting ... (${identity})`,
+  );
+}
+
+async function trySelectCronJob(
+  metadataFiles: Array<Metadata>,
+  files: Array<string>,
+  identity: string,
+): Promise<Cron | null> {
+  const store = getRobotStore();
+  const now = new Date();
+  const startWindowMinutes = env.CRON_START_WINDOW_MINUTES;
+
+  for (const { metadata, index } of getActiveCronJobs(metadataFiles, {
+    now,
+    startWindowMinutes,
+  })) {
+    const job = await prisma.job.findFirst({
+      where: {
+        userId: store.userId,
+        hostname: identity,
+        title: metadata.title,
+        statusCode: -1,
+      },
+    });
+
+    if (!job) {
+      const alreadyStartedJob = await prisma.job.findFirst({
         where: {
           userId: store.userId,
+          hostname: identity,
           title: metadata.title,
-          statusCode: -1,
+          cron: metadata.cron,
+          nextPlannedExecution: metadata.nextDate,
+          statusCode: { in: [-1, 0] },
         },
       });
 
-      // We continue only if there is no job in progress
-      if (!job) {
-        // Want to check if another job has already been started during the same cron period.
-        // If it's the case, we do not want to restart the cron
-        const alreadyStartedJob = await prisma.job.findFirst({
-          where: {
-            userId: store.userId,
+      if (!alreadyStartedJob) {
+        try {
+          const file = await injectSecret(
+            fs.readFileSync(files[index] as string, "utf8"),
+          );
+
+          if (
+            isCronPastStartWindow(metadata, startWindowMinutes, now)
+          ) {
+            logger.warn(
+              {
+                jobTitle: metadata.title,
+                cron: metadata.cron,
+                periodStart: metadata.nextDate,
+              },
+              "Scheduled job started after the configured start window",
+            );
+          }
+
+          return {
+            file,
             title: metadata.title,
             cron: metadata.cron,
-            nextPlannedExecution: metadata.nextDate,
-          },
-        });
-
-        if (!alreadyStartedJob) {
-          try {
-            const file = await injectSecret(
-              fs.readFileSync(files[index] as string, "utf8"),
-            );
-            cronObject.title = metadata.title;
-            cronObject.cron = metadata.cron;
-            cronObject.nextDate = metadata.nextDate;
-            cronObject.keepLastCount = metadata.keepLastCount ?? -1;
-            cronObject.file = file;
-            break;
-          } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            logger.error(
-              { err: error, jobTitle: metadata.title },
-              "Scheduled job could not be prepared",
-            );
-            await markJobAsSelectionError({
-              cron: metadata.cron,
-              nextDate: metadata.nextDate,
-              title: metadata.title,
-              errorMessage,
-            });
-          }
+            nextDate: metadata.nextDate,
+            keepLastCount: metadata.keepLastCount ?? -1,
+          };
+        } catch (error) {
+          const errorMessage = getErrorMessage(error);
+          logger.error(
+            { err: error, jobTitle: metadata.title },
+            "Scheduled job could not be prepared",
+          );
+          await markJobAsSelectionError({
+            cron: metadata.cron,
+            nextDate: metadata.nextDate,
+            title: metadata.title,
+            errorMessage,
+          });
         }
-      } else {
-        logger.debug(`Same job in progress detected, aborted (${job.title})`);
       }
+    } else {
+      logger.debug(`Same job in progress detected, aborted (${job.title})`);
     }
   }
 
-  if (!cronObject.title) {
-    throw new Error(
-      `No cron object was found for this agent, aborting ... (${identity})`,
-    );
-  }
-  if (!cronObject.file) {
-    throw new Error("No file in the cron job");
-  }
-
-  return cronObject;
+  return null;
 }
 
 async function removeLastNthJob(jobTitle: string, keeplastCount: number) {

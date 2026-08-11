@@ -47,7 +47,7 @@ func main() {
 func processJob(apiUrl string) {
 	log.Debug().Str("version", version).Msg("Start job processing task in background")
 
-	for range time.Tick(time.Second * time.Duration(10)) {
+	for range time.Tick(time.Second * time.Duration(5)) {
 		if runningJobs.Load() > 0 {
 			log.Debug().Msg("Agent busy, skipping job poll")
 			continue

@@ -18,10 +18,16 @@ const booleanWithDefault =
     value =>
       boolean(value) ?? defaultValue;
 
+const numberWithDefault =
+  (defaultValue: number): Validator<number> =>
+    value =>
+      number(value) ?? defaultValue;
+
 const fake = {
   API_URL: "test_fake",
   CI_COMMIT_SHA: "test_fake",
   CI_PIPELINE_CREATED: new Date().getTime().toString(),
+  CRON_START_WINDOW_MINUTES: "5",
   JOB_DEFAULT_TIMEOUT: "1h",
 
   OIDC_CLIENT_ID: "test_fake",
@@ -46,6 +52,7 @@ export const env = validate({
     DISABLE_AUTHENTICATION: booleanWithDefault(false),
     GIT_CONFIGS_REPOSITORY: stringWithDefault("/tmp"),
     HOMEPAGE_TOKEN: optional(string),
+    CRON_START_WINDOW_MINUTES: numberWithDefault(5),
     JOB_DEFAULT_TIMEOUT: string,
     LOG_LEVEL: oneOf("trace", "debug", "info", "warn", "error", "fatal"),
 
