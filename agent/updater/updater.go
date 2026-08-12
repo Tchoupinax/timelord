@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/rs/zerolog/log"
 )
 

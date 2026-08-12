@@ -2,19 +2,21 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+
+	_ "github.com/Tchoupinax/timelord/agent/logger"
+	"github.com/rs/zerolog/log"
 )
 
 func PushLog(
 	url string,
 	res *ResponseData,
-	log string,
+	content string,
 	createdAt string,
 	logIndex int,
 	logType string,
 ) {
 	payload := map[string]any{
-		"content":   log,
+		"content":   content,
 		"createdAt": createdAt,
 		"index":     logIndex,
 		"jobId":     res.Id,
@@ -24,6 +26,6 @@ func PushLog(
 	jsonData, _ := json.Marshal(payload)
 	_, err := ApiPost(url, jsonData)
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Str("job_id", res.Id).Msg("Failed to push log entry")
 	}
 }

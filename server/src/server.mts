@@ -1,6 +1,6 @@
 import Fastify from "fastify";
-import { LoggerOptions } from "pino";
 
+import { createLoggerOptions } from "./logger-config.mts";
 import { logger } from "./logger.mts";
 import { router } from "./router.mts";
 import { Store } from "./store.mts";
@@ -13,24 +13,10 @@ declare module "@fastify/request-context" {
 }
 
 export async function createServer() {
-  const config: LoggerOptions = {
-    level: "debug",
-    base: null,
-  };
-
-  if (process.env.NODE_ENV !== "production") {
-    config.transport = {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        levelFirst: true,
-        singleLine: true,
-        translateTime: "HH:MM:ss.l",
-      },
-    };
-  }
-
-  const fastify = Fastify({ logger: config, disableRequestLogging: true });
+  const fastify = Fastify({
+    logger: createLoggerOptions(env.LOG_LEVEL),
+    disableRequestLogging: true,
+  });
   await fastify.register(router);
 
   return fastify;
