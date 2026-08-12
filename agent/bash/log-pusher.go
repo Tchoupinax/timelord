@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Tchoupinax/timelord/agent/api"
+	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/rs/zerolog/log"
 )
 

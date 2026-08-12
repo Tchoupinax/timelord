@@ -2,12 +2,12 @@ package api
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"time"
 
+	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/rs/zerolog/log"
 )
 
@@ -37,21 +37,21 @@ func ApiGet(
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error sending GET request")
 		return []byte{}, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("failed to close response body: %v", err)
+			log.Warn().Err(err).Msg("failed to close GET response body")
 		}
 	}()
 
-	log.Debug().Msg(fmt.Sprintf("Response Status: %s", resp.Status))
+	log.Debug().Str("status", resp.Status).Msg("GET response received")
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response body: %s\n", err)
+		log.Error().Err(err).Str("url", url).Msg("Error reading GET response body")
 		return []byte{}, err
 	}
 
@@ -73,19 +73,19 @@ func ApiPost(
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		log.Error().Err(err).Str("url", url).Msg("Error sending POST request")
 		return []byte{}, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("failed to close response body: %v", err)
+			log.Warn().Err(err).Msg("failed to close POST response body")
 		}
 	}()
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response body: %s\n", err)
+		log.Error().Err(err).Str("url", url).Msg("Error reading POST response body")
 		return []byte{}, err
 	}
 

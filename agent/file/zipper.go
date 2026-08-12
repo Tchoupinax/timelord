@@ -2,13 +2,13 @@ package file
 
 import (
 	"archive/zip"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/Tchoupinax/timelord/agent/api"
+	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,7 +19,7 @@ func DownloadFile(url, outputPath string) error {
 	}
 	defer func() {
 		if err := outFile.Close(); err != nil {
-			log.Printf("failed to close response body: %v", err)
+			log.Warn().Err(err).Msg("failed to close downloaded file")
 		}
 	}()
 
@@ -35,11 +35,11 @@ func DownloadFile(url, outputPath string) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("failed to close response body: %v", err)
+			log.Warn().Err(err).Msg("failed to close download response body")
 		}
 	}()
 
-	log.Debug().Msg(fmt.Sprintf("Response Status: %s", resp.Status))
+	log.Debug().Str("status", resp.Status).Msg("asset download response received")
 
 	_, err = io.Copy(outFile, resp.Body)
 	return err
@@ -52,7 +52,7 @@ func Unzip(source, destination string) error {
 	}
 	defer func() {
 		if err := r.Close(); err != nil {
-			log.Printf("failed to close response body: %v", err)
+			log.Warn().Err(err).Msg("failed to close zip archive")
 		}
 	}()
 
@@ -74,7 +74,7 @@ func Unzip(source, destination string) error {
 			}
 			defer func() {
 				if err := outFile.Close(); err != nil {
-					log.Printf("failed to close response body: %v", err)
+					log.Warn().Err(err).Msg("failed to close extracted file")
 				}
 			}()
 
@@ -84,7 +84,7 @@ func Unzip(source, destination string) error {
 			}
 			defer func() {
 				if err := rc.Close(); err != nil {
-					log.Print("_")
+					log.Warn().Err(err).Msg("failed to close zip entry reader")
 				}
 			}()
 

@@ -296,7 +296,7 @@ async function removeLastNthJob(jobTitle: string, keeplastCount: number) {
 
     logger.info("Deleted all items except the last five.");
   } catch (error) {
-    console.error("Error removing items:", error);
+    logger.error(error, "Error removing queued jobs");
   }
 }
 

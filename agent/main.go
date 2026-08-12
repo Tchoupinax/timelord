@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync/atomic"
@@ -13,6 +12,7 @@ import (
 	api "github.com/Tchoupinax/timelord/agent/api"
 	"github.com/Tchoupinax/timelord/agent/bash"
 	"github.com/Tchoupinax/timelord/agent/file"
+	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/Tchoupinax/timelord/agent/updater"
 	"github.com/rs/zerolog/log"
 )
@@ -100,8 +100,7 @@ func getJob(url string) *api.ResponseData {
 	// Unmarshal the JSON body into the struct
 	var data api.ResponseData
 	if err := json.Unmarshal(body, &data); err != nil {
-		fmt.Println(string(body))
-		fmt.Printf("Error unmarshalling JSON: %s\n", err)
+		log.Error().Err(err).Str("body", string(body)).Msg("Error unmarshalling job response")
 		return nil
 	}
 
@@ -115,7 +114,7 @@ func getJob(url string) *api.ResponseData {
 	// Decode the Base64 string
 	decodedBytes, err := base64.StdEncoding.DecodeString(data.File)
 	if err != nil {
-		fmt.Printf("Error decoding Base64: %s\n", err)
+		log.Error().Err(err).Msg("Error decoding job script from Base64")
 		return nil
 	}
 
@@ -124,9 +123,8 @@ func getJob(url string) *api.ResponseData {
 	// 🚀 Download assets if attached to this cron job
 	if data.HasAssets {
 		folder := "/tmp/timelord/"
-		err := os.MkdirAll(folder, os.ModePerm)
-		if err != nil {
-			fmt.Println(err)
+		if err := os.MkdirAll(folder, os.ModePerm); err != nil {
+			log.Error().Err(err).Str("folder", folder).Msg("Failed to create assets folder")
 		}
 
 		zipFilePath := folder + data.Id + ".zip"
@@ -134,16 +132,15 @@ func getJob(url string) *api.ResponseData {
 
 		assetsUrl := url + "/assets?jobId=" + data.Id
 		if err := file.DownloadFile(assetsUrl, zipFilePath); err != nil {
-			fmt.Println("Error downloading file:", err)
+			log.Error().Err(err).Str("url", assetsUrl).Msg("Error downloading job assets")
 		}
 
 		if err := file.Unzip(zipFilePath, extractPath); err != nil {
-			fmt.Println("Error extracting file:", err)
+			log.Error().Err(err).Str("archive", zipFilePath).Msg("Error extracting job assets")
 		}
 
-		err = os.Remove(zipFilePath)
-		if err != nil {
-			fmt.Println(err)
+		if err := os.Remove(zipFilePath); err != nil {
+			log.Error().Err(err).Str("path", zipFilePath).Msg("Failed to remove assets archive")
 		}
 
 		data.ExtractPath = extractPath
@@ -167,7 +164,7 @@ func heartbeat(apiUrl string) {
 
 		go func() {
 			if _, err := api.ApiPost(apiUrl+"/heartbeat", jsonData); err != nil {
-				log.Printf("heartbeat failed: %v", err)
+				log.Warn().Err(err).Msg("heartbeat failed")
 			}
 		}()
 	}

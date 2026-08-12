@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+
+	_ "github.com/Tchoupinax/timelord/agent/logger"
+	"github.com/rs/zerolog/log"
 )
 
 func PushResult(
@@ -22,6 +24,6 @@ func PushResult(
 	jsonData, _ := json.Marshal(payload)
 	_, err := ApiPost(url, jsonData)
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Str("job_id", res.Id).Int("status", status).Msg("Failed to push job result")
 	}
 }
