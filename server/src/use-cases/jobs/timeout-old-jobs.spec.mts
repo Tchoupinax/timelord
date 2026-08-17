@@ -35,6 +35,6 @@ describe("Timeout old jobs", () => {
 
     await timeoutOldJobs();
 
-    expect(prisma.job.update).toHaveBeenCalledTimes(1);
+    expect(prisma.job.update.mock.calls).toHaveLength(1);
   });
 });

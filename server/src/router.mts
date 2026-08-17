@@ -4,11 +4,11 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import fs from "fs";
 
 import { logger } from "./logger.mts";
-import { StoreUnavailableError } from "./store.mts";
 import { extractAgentMetadata } from "./middlewares/extract-agent-metadata.mts";
 import { extractHumanMetadata } from "./middlewares/extract-human-metadata.mts";
 import { registerHttpMetrics } from "./middlewares/http-metrics.mts";
 import { prisma } from "./prisma-client.mts";
+import { StoreUnavailableError } from "./store.mts";
 import { env } from "./tools/env.mts";
 import { prometheus, recordJobCompletion } from "./tools/metrics.mts";
 import { setupSSH } from "./tools/setup-ssh.mts";
@@ -23,9 +23,11 @@ import { refreshGitConfig } from "./use-cases/git-config/refresh-git-config.mts"
 import { updateGitConfig } from "./use-cases/git-config/update-git-config.mts";
 import { getHomepageStatus } from "./use-cases/homepage/get-homepage-status.mts";
 import { addJobToQueue } from "./use-cases/jobs/add-job-to-queue.mts";
+import { cancelJob } from "./use-cases/jobs/cancel-job.mts";
 import { clearJobQueue } from "./use-cases/jobs/clear-job-queue.mts";
 import { getJob } from "./use-cases/jobs/get-job/index.mts";
 import { getJobAssets } from "./use-cases/jobs/get-job-assets.mts";
+import { getJobCancelStatus } from "./use-cases/jobs/get-job-cancel-status.mts";
 import { listJobs } from "./use-cases/jobs/list-jobs.mts";
 import { listLogs } from "./use-cases/logs/list-logs.mts";
 import { pushLogs } from "./use-cases/logs/push-logs.mts";
@@ -107,6 +109,7 @@ export function router(fastify: FastifyInstance) {
 
     fastify.get("/job", getJob);
     fastify.get("/job/assets", getJobAssets);
+    fastify.get("/job/cancel", getJobCancelStatus);
 
     fastify.post(
       "/job",
@@ -116,13 +119,18 @@ export function router(fastify: FastifyInstance) {
             id: string;
             statusCode: number;
             finalState?: string;
+            statusComment?: string;
           };
         }>,
       ) => {
         const body = request.body;
 
         if (body.id) {
-          const data: { statusCode: number; finalState?: string } = {
+          const data: {
+            statusCode: number;
+            finalState?: string;
+            statusComment?: string;
+          } = {
             statusCode: body.statusCode,
           };
 
@@ -131,6 +139,10 @@ export function router(fastify: FastifyInstance) {
             ["Success", "Warning", "Error"].includes(body.finalState)
           ) {
             data.finalState = body.finalState;
+          }
+
+          if (body.statusComment) {
+            data.statusComment = body.statusComment;
           }
 
           await prisma.job.update({
@@ -174,6 +186,7 @@ export function router(fastify: FastifyInstance) {
     fastify.patch("/git-configs/:id", updateGitConfig);
     fastify.post("/git-configs/refresh", refreshGitConfig);
     fastify.post("/jobs/queue", addJobToQueue);
+    fastify.post("/jobs/:id/cancel", cancelJob);
     fastify.delete("/jobs/queue", clearJobQueue);
     fastify.post("/secrets", createSecret);
   });

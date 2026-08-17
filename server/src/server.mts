@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 
-import { createLoggerOptions } from "./logger-config.mts";
 import { logger } from "./logger.mts";
+import { createLoggerOptions } from "./logger-config.mts";
 import { router } from "./router.mts";
 import { Store } from "./store.mts";
 import { env } from "./tools/env.mts";

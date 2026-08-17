@@ -110,6 +110,30 @@
       </button>
 
       <button
+        v-if="job.statusCode === -1"
+        class="flex items-center px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+        :disabled="stopping || Boolean(job.cancelRequestedAt)"
+        :title="job.cancelRequestedAt ? 'Stopping...' : 'Stop running job'"
+        @click="stopJob(job.id)"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-4 h-4 mr-1"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
+          />
+        </svg>
+        {{ job.cancelRequestedAt ? "Stopping..." : "Stop" }}
+      </button>
+
+      <button
         class="flex items-center justify-center w-8 h-8 text-gray-700 transition-colors duration-200 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800/20"
         title="Requeue job"
         @click="putJobInQueue(job.title)"
@@ -168,6 +192,8 @@ const props = defineProps({
   },
 });
 
+const stopping = ref(false);
+
 const viewResult = () => {
   emit("view-result", props.job.id);
 };
@@ -194,6 +220,38 @@ const putJobInQueue = async (title: string) => {
         text: title,
       });
     });
+};
+
+const stopJob = async (jobId: string) => {
+  const config = useRuntimeConfig();
+  stopping.value = true;
+
+  try {
+    const response = await fetch(
+      `${config.public.apiEndpoint}/jobs/${jobId}/cancel`,
+      {
+        credentials: "include",
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to stop job (${response.status})`);
+    }
+
+    notify({
+      title: "Stop requested",
+      type: "success",
+      text: "The agent will stop this job shortly",
+    });
+  } catch {
+    notify({
+      title: "Failed to stop job",
+      type: "error",
+    });
+  } finally {
+    stopping.value = false;
+  }
 };
 </script>
 

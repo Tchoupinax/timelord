@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -27,6 +28,8 @@ const (
 	defaultJobTimeout = 30 * time.Minute
 	// Exit code used by GNU timeout, reused here for a job killed on deadline.
 	timeoutExitCode = 124
+	// Exit code used when a user asks to stop a running job from the UI.
+	cancelExitCode = 130
 	// Lines longer than this are split into several log entries. Tools such as
 	// terraform or rclone can emit megabytes without a single line break.
 	maxLogLineLength = 8000
@@ -43,6 +46,7 @@ type ExecResult struct {
 	Status     int
 	FinalState string // Success, Warning, or Error from TIMELORD_STATE
 	TimedOut   bool
+	Cancelled  bool
 }
 
 var allowedFinalStates = map[string]bool{
@@ -63,12 +67,19 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 	stateFilePath := executionPath + "/" + "timelord-state-" + uuid.New().String() + ".txt"
 
 	timeout := jobTimeout()
-	ctx := context.Background()
-	cancel := context.CancelFunc(func() {})
-	if timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, timeout)
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	if timeout > 0 {
+		var timeoutCancel context.CancelFunc
+		ctx, timeoutCancel = context.WithTimeout(ctx, timeout)
+		defer timeoutCancel()
+	}
+
+	var cancelled atomic.Bool
+	done := make(chan struct{})
+	defer close(done)
+	go watchCancelRequest(apiUrl, data.Id, cancel, &cancelled, done)
 
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", bashScript)
 	cmd.Env = []string{fmt.Sprintf("TIMELORD_STATE=%s", stateFilePath)}
@@ -114,8 +125,9 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 
 	waitErr := cmd.Wait()
 	timedOut := errors.Is(ctx.Err(), context.DeadlineExceeded)
+	wasCancelled := cancelled.Load()
 
-	if timedOut {
+	if timedOut || wasCancelled {
 		// The script is gone but its background children may not be.
 		_ = signalGroup(cmd, syscall.SIGKILL)
 	}
@@ -135,13 +147,21 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 			"STDERR",
 		)
 	}
+	if wasCancelled {
+		pusher.Push("Job cancelled by user", "STDERR")
+	}
 	pusher.Close()
 
 	finalState := readFinalState(stateFilePath)
 
 	if timedOut {
-		log.Error().Dur("timeout", timeout).Msg("⏱️  Script timed out and was killed")
+		log.Error().Dur("timeout", timeout).Msg("Script timed out and was killed")
 		return ExecResult{Status: timeoutExitCode, FinalState: finalState, TimedOut: true}
+	}
+
+	if wasCancelled {
+		log.Info().Msg("Job cancelled by user request")
+		return ExecResult{Status: cancelExitCode, FinalState: finalState, Cancelled: true}
 	}
 
 	if waitErr != nil {
@@ -184,6 +204,30 @@ func jobTimeout() time.Duration {
 	}
 
 	return timeout
+}
+
+func watchCancelRequest(
+	apiUrl string,
+	jobId string,
+	cancel context.CancelFunc,
+	cancelled *atomic.Bool,
+	done <-chan struct{},
+) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			if api.IsCancelRequested(apiUrl, jobId) {
+				cancelled.Store(true)
+				cancel()
+				return
+			}
+		}
+	}
 }
 
 func signalGroup(cmd *exec.Cmd, sig syscall.Signal) error {

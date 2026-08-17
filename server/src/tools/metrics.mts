@@ -48,6 +48,12 @@ export const jobsTimedOutTotal = new client.Counter({
   registers: [register],
 });
 
+export const jobsCancelRequestedTotal = new client.Counter({
+  name: "timelord_jobs_cancel_requested_total",
+  help: "Running jobs for which a user requested cancellation",
+  registers: [register],
+});
+
 export const jobQueueAddedTotal = new client.Counter({
   name: "timelord_job_queue_added_total",
   help: "Jobs added to the manual queue",

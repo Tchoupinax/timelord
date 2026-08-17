@@ -52,7 +52,9 @@
 
             <button
               v-if="
-                !launchedTitles.has(job.title) && !job?.jobs[0]?.queuePending
+                !launchedTitles.has(job.title) &&
+                !job?.jobs[0]?.queuePending &&
+                !runningJob(job)
               "
               type="button"
               :disabled="launchingTitle === job.title"
@@ -94,7 +96,31 @@
             </button>
 
             <div
-              v-if="
+              v-else-if="runningJob(job)"
+              class="flex items-center px-4 py-1.5 space-x-2 border-2 rounded-2xl bg-violet-100 dark:bg-violet-500/20 border-violet-400 dark:border-violet-500 shadow-md shadow-violet-200/50 dark:shadow-violet-500/10"
+            >
+              <div class="flex items-end justify-center space-x-0.5 h-4">
+                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 0ms" />
+                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 160ms" />
+                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 320ms" />
+              </div>
+              <span
+                class="text-sm font-semibold text-violet-800 dark:text-violet-200 font-handwriting"
+              >
+                Running
+              </span>
+              <button
+                type="button"
+                class="px-3 py-1 text-xs font-medium text-red-700 transition-colors border border-red-300 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-900/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                :disabled="stoppingId === runningJob(job)?.id || Boolean(runningJob(job)?.cancelRequestedAt)"
+                @click="stopJob(runningJob(job)!.id)"
+              >
+                {{ runningJob(job)?.cancelRequestedAt ? "Stopping..." : "Stop" }}
+              </button>
+            </div>
+
+            <div
+              v-else-if="
                 // @ts-expect-error
                 job.jobs[0].queuePending ||
                 (launchedTitles.has(job.title) &&
@@ -251,6 +277,7 @@ const { notify } = useNotification();
 
 const $emit = defineEmits(["showLogsForJobId", "refresh"]);
 const launchingTitle = ref<string | null>(null);
+const stoppingId = ref<string | null>(null);
 const launchedTitles = ref<Set<string>>(new Set());
 
 const $props = defineProps({
@@ -345,17 +372,48 @@ const startJobNow = async (title: string) => {
   }
 };
 
+const runningJob = (job: GroupedJob) =>
+  job.jobs.find(j => j.statusCode === -1);
+
+const stopJob = async (jobId: string) => {
+  const config = useRuntimeConfig();
+  stoppingId.value = jobId;
+
+  try {
+    const response = await fetch(
+      `${config.public.apiEndpoint}/jobs/${jobId}/cancel`,
+      {
+        credentials: "include",
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to stop job (${response.status})`);
+    }
+
+    notify({
+      title: "Stop requested",
+      type: "success",
+      text: "The agent will stop this job shortly",
+    });
+    $emit("refresh");
+  } catch {
+    notify({
+      title: "Failed to stop job",
+      type: "error",
+    });
+  } finally {
+    stoppingId.value = null;
+  }
+};
+
 const showLogs = (jobId: string) => {
   $emit("showLogsForJobId", jobId);
 };
 
 const displayedJobs = (job: GroupedJob) =>
   job.jobs.filter(j => !j.neverExecuted).reverse();
-
-const latestComment = (job: GroupedJob): string => {
-  const commentedJob = job.jobs.find(j => Boolean(j.statusComment));
-  return commentedJob?.statusComment ?? "";
-};
 
 const computeJobStats = (job: GroupedJob) => {
   const values = job.jobs

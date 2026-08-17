@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-
 import type { Metadata } from "#src/functions/extract-metadata.mts";
+
+import { describe, expect, it } from "vitest";
 
 import {
   cronUrgencyScore,

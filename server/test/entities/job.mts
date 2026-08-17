@@ -13,6 +13,7 @@ export function generateJob(override: Partial<Job> = {}): Job {
     updatedAt: new Date(),
     userId: randomUUID(),
     statusComment: null,
+    cancelRequestedAt: null,
     nextPlannedExecution: "",
     finalState: null,
     ...override,
