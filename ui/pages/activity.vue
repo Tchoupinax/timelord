@@ -164,7 +164,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 
-import type { ActivityItem } from "~/types/external-activity";
+import type { ActivityItem, ActivityResponse } from "~/types/external-activity";
 
 const config = useRuntimeConfig();
 const activities = ref<ActivityItem[]>([]);
@@ -185,16 +185,19 @@ const refreshActivity = async () => {
     const res = await fetch(`${config.public.apiEndpoint}/activity`, {
       credentials: "include",
     });
-    const data = await res.json();
-    activities.value = data?.activities ?? [];
+    const data = (await res.json()) as ActivityResponse;
+    activities.value = data.activities ?? [];
   } catch (err) {
     console.error("Failed to refresh activity:", err);
   }
 };
 
-const { data } = await useFetch(`${config.public.apiEndpoint}/activity`, {
-  credentials: "include",
-});
+const { data } = await useFetch<ActivityResponse>(
+  `${config.public.apiEndpoint}/activity`,
+  {
+    credentials: "include",
+  },
+);
 
 activities.value = data.value?.activities ?? [];
 

@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 import axios, { AxiosResponse } from "axios";
-import fs from "fs";
-import { beforeAll, describe, it } from "vitest";
+import { afterAll, beforeAll, describe, it } from "vitest";
 
 import { prisma } from "../../../src/prisma-client.mts";
 import { TEST_USER_ID } from "../../config/constants.mts";
@@ -10,6 +11,7 @@ import { generateGitConfig } from "../../entities/git-config.mts";
 
 const masterTokenForAgent = randomUUID();
 const jobId = randomUUID();
+const zipPath = path.join(process.cwd(), "toto.zip");
 
 describe("when", () => {
   let response: AxiosResponse;
@@ -48,8 +50,14 @@ describe("when", () => {
     });
   });
 
+  afterAll(() => {
+    if (fs.existsSync(zipPath)) {
+      fs.unlinkSync(zipPath);
+    }
+  });
+
   it("should have inserted the git-configs", async () => {
-    const writer = fs.createWriteStream("toto.zip");
+    const writer = fs.createWriteStream(zipPath);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     response.data.pipe(writer);
 

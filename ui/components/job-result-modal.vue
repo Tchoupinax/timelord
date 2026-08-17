@@ -19,8 +19,8 @@
       </div>
 
       <div class="h-[calc(100%-45px)] p-2 pt-4 overflow-auto bg-gray-50">
-        <div v-if="jsonObject" v-html="jsonObject"></div>
-        <p v-else class="px-4 text-sm text-neutral-500 dark:text-gray-400">
+        <div ref="highlightedLogs" />
+        <p v-if="showEmpty" class="px-4 text-sm text-neutral-500 dark:text-gray-400">
           No logs for this job.
         </p>
       </div>
@@ -43,7 +43,7 @@ export default {
     return {
       isOpen: true,
       logs: "",
-      jsonObject: "",
+      showEmpty: false,
     };
   },
   async mounted() {
@@ -64,6 +64,7 @@ export default {
       this.logs = await response.text();
 
       if (!this.logs.trim()) {
+        this.showEmpty = true;
         return;
       }
 
@@ -77,13 +78,17 @@ export default {
 
       this.logs += "\n";
 
-      this.jsonObject = shiki.codeToHtml(this.logs, {
-        theme: "none",
-        lang: "",
-        defaultColor: "light",
-      });
+      const highlightedLogs = this.$refs.highlightedLogs as HTMLElement | undefined;
+      if (highlightedLogs) {
+        highlightedLogs.innerHTML = shiki.codeToHtml(this.logs, {
+          theme: "none",
+          lang: "",
+          defaultColor: "light",
+        });
+      }
     } catch (error) {
       console.error("Failed to load job logs:", error);
+      this.showEmpty = true;
     }
 
     document.addEventListener("keydown", evt => {

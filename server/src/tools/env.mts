@@ -43,7 +43,10 @@ const fake = {
 };
 
 export const env = validate({
-  env: process.env.NODE_ENV === "test" ? fake : process.env,
+  env:
+    process.env.NODE_ENV === "test"
+      ? { ...fake, ...process.env }
+      : process.env,
   validators: {
     API_URL: string,
     CI_COMMIT_SHA: string,

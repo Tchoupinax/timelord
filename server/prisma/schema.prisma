@@ -22,6 +22,7 @@ model Job {
   statusCode           Int? @map("status_code") /// End status code of the bash script
   userId               String?  @map("user_id")
   statusComment        String? @map("status_comment") /// Provide custom comment about the end status of the job
+  cancelRequestedAt    DateTime? @map("cancel_requested_at") /// Set when a user asks to stop a running job
   nextPlannedExecution String? @map("next_planned_execution") /// String date when the next execution was planned. Used to detect duplicate
   finalState           String? @map("final_state") /// Script-reported state: Success, Warning, Error (from TIMELORD_STATE)
 

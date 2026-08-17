@@ -1,8 +1,13 @@
 import swc from "unplugin-swc";
 import { defineConfig } from "vitest/config";
 
+import { e2eEnv } from "./e2e-env.mts";
+
 export default defineConfig({
+  esbuild: false,
+  oxc: false,
   test: {
+    env: e2eEnv,
     globals: true,
     sequence: {
       hooks: "list",

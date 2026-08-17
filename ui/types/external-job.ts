@@ -8,6 +8,7 @@ export type ExternalJob = {
   statusCode: number | null;
   userId: string | null;
   statusComment: string | null;
+  cancelRequestedAt: string | null;
   nextPlannedExecution: string | null;
   neverExecuted: boolean;
   queuePending: boolean;

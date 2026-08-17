@@ -93,6 +93,7 @@ export async function listJobs(
       nextPlannedExecution: null,
       statusCode: -1,
       statusComment: "",
+      cancelRequestedAt: null,
       userId: "",
       neverExecuted: true,
       keepLastCount: metadata.keepLastCount ?? 0,
@@ -102,7 +103,7 @@ export async function listJobs(
 
   const returnedJob: Array<ExternalJob> = [
     ...jobs.map(j => ({ ...j, neverExecuted: false }) as ExternalJob),
-    ...jobsFromGit.map(j => ({ ...j, neverExecuted: true }) as ExternalJob),
+    ...jobsFromGit.map(j => ({ ...j, neverExecuted: true })),
   ];
 
   const queuedJobs = await prisma.jobQueue.findMany();

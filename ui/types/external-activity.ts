@@ -13,3 +13,7 @@ export type ActivityItem = {
   hostname?: string | null;
   statusComment?: string | null;
 };
+
+export type ActivityResponse = {
+  activities: ActivityItem[];
+};

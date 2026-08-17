@@ -73,18 +73,24 @@ func runJob(apiUrl string, data *api.ResponseData) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error().Any("panic", r).Msg("Job execution panicked")
-			api.PushResult(apiUrl+"/job", data, 1, "")
+			api.PushResult(apiUrl+"/job", data, 1, "", "")
 		}
 	}()
 
 	result := bash.Exec(data.File, apiUrl, data)
 	log.Debug().Msg(data.Id)
 
+	statusComment := ""
+	if result.Cancelled {
+		statusComment = "Cancelled by user"
+	}
+
 	api.PushResult(
 		apiUrl+"/job",
 		data,
 		result.Status,
 		result.FinalState,
+		statusComment,
 	)
 
 	// At the end of the process, clean assets
