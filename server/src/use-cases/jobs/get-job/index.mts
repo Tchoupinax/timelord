@@ -14,6 +14,10 @@ import {
   getActiveCronJobs,
   isCronPastStartWindow,
 } from "./cron-priority.mts";
+import {
+  buildCronPeriodAttemptWhere,
+  getCronPeriodStart,
+} from "./cron-period.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
 
@@ -105,6 +109,15 @@ async function getOneJob(
 
   const scheduledJob = await trySelectCronJob(metadataFiles, files, identity);
   if (scheduledJob) {
+    if (scheduledJob.title) {
+      await prisma.jobQueue.deleteMany({
+        where: {
+          title: scheduledJob.title,
+          userId: store.userId,
+        },
+      });
+    }
+
     return scheduledJob;
   }
 
@@ -133,6 +146,29 @@ async function getOneJob(
 
     const job = metadataFiles.find(m => m.title === queuedJob.title)!;
     const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
+    const periodStart = getCronPeriodStart(job);
+
+    if (periodStart) {
+      const alreadyAttempted = await prisma.job.findFirst({
+        where: buildCronPeriodAttemptWhere({
+          userId: store.userId,
+          hostname: identity,
+          title: job.title,
+          periodStart,
+        }),
+      });
+
+      if (alreadyAttempted) {
+        await prisma.jobQueue.deleteMany({
+          where: {
+            title: job.title,
+            userId: store.userId,
+          },
+        });
+        return await getOneJob(configs, identity);
+      }
+    }
+
     try {
       const file = await injectSecret(
         fs.readFileSync(files[jobIndex] as string, "utf8"),
@@ -206,14 +242,17 @@ async function trySelectCronJob(
     });
 
     if (!job) {
-      const alreadyStartedJob = await prisma.job.findFirst({
-        where: {
-          userId: store.userId,
-          hostname: identity,
-          title: metadata.title,
-          nextPlannedExecution: metadata.nextDate,
-        },
-      });
+      const periodStart = getCronPeriodStart(metadata);
+      const alreadyStartedJob = periodStart
+        ? await prisma.job.findFirst({
+            where: buildCronPeriodAttemptWhere({
+              userId: store.userId,
+              hostname: identity,
+              title: metadata.title,
+              periodStart,
+            }),
+          })
+        : null;
 
       if (!alreadyStartedJob) {
         try {
