@@ -10,3 +10,4 @@ server/tmp/*
 
 server/prisma/generated/*
 .pnpm-store
+fnox.local.toml

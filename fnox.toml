@@ -1,0 +1,35 @@
+default_provider = "plain"
+
+[providers.plain]
+type = "plain"
+
+[providers.vault]
+type = "vault"
+address = "https://vault.mysupercloud.dev"
+path = "fnox/timelord"
+credential_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
+
+[secrets]
+DATABASE_URL = { default = "postgres://postgres:mysecret@localhost:5439/postgres" }
+POSTGRES_DATABASE = { default = "postgres" }
+POSTGRES_HOSTNAME = { default = "localhost" }
+POSTGRES_PASSWORD = { default = "mysecret" }
+POSTGRES_PORT = { default = "5439" }
+POSTGRES_USERNAME = { default = "postgres" }
+
+[profiles.front.secrets]
+TIMELORD_REMOTE_API = { default = "https://crons.mysupercloud.dev/api" }
+
+[profiles.production.providers.vault_prod]
+type = "vault"
+address = "https://vault.mysupercloud.dev"
+path = "k3s-home"
+credential_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
+
+[profiles.production.secrets]
+DATABASE_URL = { default = "_" }
+POSTGRES_DATABASE = { default = "timelord" }
+POSTGRES_HOSTNAME = { default = "10.20.0.10" }
+POSTGRES_PASSWORD = { provider = "vault_prod", value = "timelord/databasePassword" }
+POSTGRES_PORT = { default = "5432" }
+POSTGRES_USERNAME = { default = "timelord" }

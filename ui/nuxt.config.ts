@@ -9,6 +9,9 @@ delete defaultColors.coolGray;
 delete defaultColors.blueGray;
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const remoteApi = process.env.TIMELORD_REMOTE_API;
+const remoteApiOrigin = remoteApi ? new URL(remoteApi).origin : undefined;
+
 export default defineNuxtConfig({
   ssr: false,
   compatibilityDate: "2024-11-01",
@@ -23,11 +26,27 @@ export default defineNuxtConfig({
   devServer: {
     port: 3000,
   },
+  vite: {
+    server: remoteApiOrigin
+      ? {
+          proxy: {
+            "/api": {
+              target: remoteApiOrigin,
+              changeOrigin: true,
+              secure: true,
+              cookieDomainRewrite: "localhost",
+            },
+          },
+        }
+      : undefined,
+  },
   runtimeConfig: {
     public: {
-      apiEndpoint: process.env.API_URL
-        ? process.env.API_URL
-        : "http://localhost:9988",
+      apiEndpoint: remoteApi
+        ? "/api"
+        : process.env.API_URL
+          ? process.env.API_URL
+          : "http://localhost:9988",
       buildDate: new Date().toISOString(),
       commit: process.env.CI_COMMIT_SHA,
     },

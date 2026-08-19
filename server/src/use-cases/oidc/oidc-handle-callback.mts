@@ -4,6 +4,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
+import { cookieSecureForUrl } from "../../tools/parse-oauth-return-to.mts";
 import { env } from "../../tools/env.mts";
 import { extractAutheliaData } from "../../tools/extract-authelia-data.mts";
 import { getOidcConfiguration } from "./oidc-configuration.mts";
@@ -35,12 +36,19 @@ export async function oidcHandleCallback(
     return;
   }
 
+  const redirectUri =
+    request.cookies["timelord-oauth-redirect-uri"] ??
+    `${env.API_URL}/callback`;
+  const returnTo =
+    request.cookies["timelord-oauth-return-to"] ?? env.UI_URL;
+  const cookieSecure = cookieSecureForUrl(returnTo);
+
   const formData = new FormData();
   formData.append("client_id", clientId);
   formData.append("client_secret", clientSecret);
   formData.append("grant_type", "authorization_code");
   formData.append("code", code);
-  formData.append("redirect_uri", `${env.API_URL}/callback`);
+  formData.append("redirect_uri", redirectUri);
 
   const { tokenEndpoint } = await getOidcConfiguration();
 
@@ -96,19 +104,25 @@ export async function oidcHandleCallback(
     });
   }
 
+  reply.clearCookie("timelord-oauth-redirect-uri", { path: "/" });
+  reply.clearCookie("timelord-oauth-return-to", { path: "/" });
+
   reply.setCookie("timelord-userId", sub, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure,
     expires,
+    path: "/",
+    sameSite: "lax",
   });
   reply.setCookie("timelord-nickname", nickname, {
     httpOnly: false, // Expected to be read from the UI. Not sensitive
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure,
     expires,
     path: "/",
+    sameSite: "lax",
   });
 
-  reply.redirect(env.UI_URL);
+  reply.redirect(returnTo);
 }
 
 function hasIdToken(data: unknown): data is { id_token: string } {

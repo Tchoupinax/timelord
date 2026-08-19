@@ -6,6 +6,8 @@
     "build": "turbo run build",
     "prewatch": "pnpm run up",
     "watch": "turbo run watch",
+    "watch:prod": "FNOX_PROFILE=production turbo run watch:prod",
+    "watch:front": "pnpm --filter @timelord/ui watch:front",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @timelord/server test:e2e",
     "lint": "turbo run lint",

@@ -82,7 +82,8 @@ const fetchLoginDetail = async () => {
 
 const loginWithAuthelia = () => {
   const config = useRuntimeConfig();
-  window.location.href = `${config.public.apiEndpoint}/connect`;
+  const returnTo = encodeURIComponent(window.location.origin);
+  window.location.href = `${config.public.apiEndpoint}/connect?return_to=${returnTo}`;
 };
 
 onMounted(async () => {

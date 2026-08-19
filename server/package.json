@@ -12,7 +12,8 @@
     "migrate": "DATABASE_URL=postgres://postgres:mysecret@localhost:5439/postgres npx prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "DATABASE_URL=postgres://postgres:mysecret@localhost:5439/postgres npx prisma db seed",
-    "studio": "npx prisma studio",
+    "studio": "fnox exec -- prisma studio",
+    "studio:prod": "fnox exec --profile production -- prisma studio",
     "test": "vitest run --config test/config/vitest.unit.config.mts",
     "test:e2e": "vitest run --config test/config/vitest.e2e.config.mts",
     "test:e2e:watch": "vitest --config test/config/vitest.e2e.config.mts --ui",
@@ -23,8 +24,10 @@
     "generate": "npx prisma generate",
     "==================================================================": "",
     "prewatch": "docker compose up -d && pnpm migrate dev && pnpm generate",
-    "watch": "tsx watch --require dotenv/config src/index.mts",
-    "start": "tsx src/index.mts"
+    "watch": "fnox exec -- tsx watch --require dotenv/config src/index.mts",
+    "watch:prod": "fnox exec --profile production -- tsx watch --require dotenv/config src/index.mts",
+    "start": "fnox exec -- tsx src/index.mts",
+    "start:prod": "fnox exec --profile production -- tsx src/index.mts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
