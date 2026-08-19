@@ -5,6 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "watch": "docusaurus start --port 3001 --no-open",
+    "watch:prod": "docusaurus start --port 3001 --no-open",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",

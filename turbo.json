@@ -20,6 +20,10 @@
     "watch": {
       "cache": false,
       "persistent": true
+    },
+    "watch:prod": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
