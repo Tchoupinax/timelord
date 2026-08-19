@@ -96,30 +96,6 @@
             </button>
 
             <div
-              v-else-if="runningJob(job)"
-              class="flex items-center px-4 py-1.5 space-x-2 border-2 rounded-2xl bg-violet-100 dark:bg-violet-500/20 border-violet-400 dark:border-violet-500 shadow-md shadow-violet-200/50 dark:shadow-violet-500/10"
-            >
-              <div class="flex items-end justify-center space-x-0.5 h-4">
-                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 0ms" />
-                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 160ms" />
-                <div class="w-1 rounded-full bg-violet-500/80 equalizer-bar" style="animation-delay: 320ms" />
-              </div>
-              <span
-                class="text-sm font-semibold text-violet-800 dark:text-violet-200 font-handwriting"
-              >
-                Running
-              </span>
-              <button
-                type="button"
-                class="px-3 py-1 text-xs font-medium text-red-700 transition-colors border border-red-300 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700 dark:hover:bg-red-900/40 disabled:opacity-60 disabled:cursor-not-allowed"
-                :disabled="stoppingId === runningJob(job)?.id || Boolean(runningJob(job)?.cancelRequestedAt)"
-                @click="stopJob(runningJob(job)!.id)"
-              >
-                {{ runningJob(job)?.cancelRequestedAt ? "Stopping..." : "Stop" }}
-              </button>
-            </div>
-
-            <div
               v-else-if="
                 // @ts-expect-error
                 job.jobs[0].queuePending ||
@@ -186,7 +162,7 @@
             v-for="subJob of displayedJobs(job)"
             :key="subJob.id"
             v-tippy="{
-              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
+              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : isJobCancelled(subJob) ? 'Cancelled' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
             }"
             class="flex items-center justify-center flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
             :class="{
@@ -194,8 +170,12 @@
                 subJob.statusCode === 0 && subJob.finalState === 'Warning',
               'bg-green-400/50 hover:bg-green-500/60 border-green-500/50 dark:bg-green-500/40 dark:hover:bg-green-400/50 dark:border-green-500/40':
                 subJob.statusCode === 0 && subJob.finalState !== 'Warning',
+              'bg-orange-400/50 hover:bg-orange-500/60 border-orange-500/50 dark:bg-orange-500/40 dark:hover:bg-orange-400/50 dark:border-orange-500/40':
+                isJobCancelled(subJob),
               'bg-red-400/50 hover:bg-red-500/60 border-red-500/50 dark:bg-red-500/40 dark:hover:bg-red-400/50 dark:border-red-500/40':
-                subJob.statusCode !== 0 && subJob.statusCode !== -1,
+                subJob.statusCode !== 0 &&
+                subJob.statusCode !== -1 &&
+                !isJobCancelled(subJob),
               'bg-violet-500/90 border-violet-500/50 dark:bg-violet-500/40 dark:hover:bg-violet-400/50 dark:border-violet-500/40':
                 subJob.statusCode === -1,
             }"
@@ -270,6 +250,7 @@ import { format } from "timeago.js";
 import type { PropType } from "vue";
 
 import type { ExternalJob } from "~/types/external-job";
+import { isJobCancelled } from "~/utils/job-status";
 
 const cronRegex =
   /^(\*|([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/([0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (\*|([0-9]|1[0-9]|2[0-3])|\*\/([0-9]|1[0-9]|2[0-3])) (\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/([1-9]|1[0-9]|2[0-9]|3[0-1])) (\*|([1-9]|1[0-2])|\*\/([1-9]|1[0-2])) (\*|([0-6])|\*\/([0-6]))$/;
@@ -277,7 +258,6 @@ const { notify } = useNotification();
 
 const $emit = defineEmits(["showLogsForJobId", "refresh"]);
 const launchingTitle = ref<string | null>(null);
-const stoppingId = ref<string | null>(null);
 const launchedTitles = ref<Set<string>>(new Set());
 
 const $props = defineProps({
@@ -373,40 +353,7 @@ const startJobNow = async (title: string) => {
 };
 
 const runningJob = (job: GroupedJob) =>
-  job.jobs.find(j => j.statusCode === -1);
-
-const stopJob = async (jobId: string) => {
-  const config = useRuntimeConfig();
-  stoppingId.value = jobId;
-
-  try {
-    const response = await fetch(
-      `${config.public.apiEndpoint}/jobs/${jobId}/cancel`,
-      {
-        credentials: "include",
-        method: "POST",
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to stop job (${response.status})`);
-    }
-
-    notify({
-      title: "Stop requested",
-      type: "success",
-      text: "The agent will stop this job shortly",
-    });
-    $emit("refresh");
-  } catch {
-    notify({
-      title: "Failed to stop job",
-      type: "error",
-    });
-  } finally {
-    stoppingId.value = null;
-  }
-};
+  job.jobs.find(j => j.statusCode === -1 && !j.neverExecuted);
 
 const showLogs = (jobId: string) => {
   $emit("showLogsForJobId", jobId);
