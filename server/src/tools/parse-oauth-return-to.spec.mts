@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   cookieSecureForUrl,
+  localOAuthRedirectUri,
   parseOAuthReturnTo,
 } from "./parse-oauth-return-to.mts";
 
@@ -27,6 +28,12 @@ describe("parseOAuthReturnTo", () => {
     expect(parseOAuthReturnTo("https://evil.example", uiUrl)).toBeNull();
     expect(parseOAuthReturnTo("javascript:alert(1)", uiUrl)).toBeNull();
     expect(parseOAuthReturnTo("", uiUrl)).toBeNull();
+  });
+});
+
+describe("localOAuthRedirectUri", () => {
+  it("uses the Authelia-registered localhost callback", () => {
+    expect(localOAuthRedirectUri).toBe("http://localhost:9988/callback");
   });
 });
 

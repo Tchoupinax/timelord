@@ -7,7 +7,7 @@
     >
       <div
         class="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 text-sm"
-        :class="iconClass(item.type)"
+        :class="iconClass(item)"
       >
         <span>{{ icon(item.type) }}</span>
       </div>
@@ -57,6 +57,7 @@
 import { format } from "timeago.js";
 
 import type { ActivityItem } from "~/types/external-activity";
+import { isJobCancelled } from "~/utils/job-status";
 
 defineEmits<{ "view-logs": [jobId: string] }>();
 
@@ -84,8 +85,12 @@ const icon = (type: ActivityItem["type"]) => {
   }
 };
 
-const iconClass = (type: ActivityItem["type"]) => {
-  switch (type) {
+const iconClass = (item: ActivityItem) => {
+  if (isJobCancelled(item)) {
+    return "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300";
+  }
+
+  switch (item.type) {
     case "job_running":
       return "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300";
     case "job_succeeded":

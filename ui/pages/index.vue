@@ -137,13 +137,36 @@
           class="flex flex-wrap items-center justify-between gap-4 mb-6"
         >
           <div class="flex-1 min-w-0" />
-          <button
-            type="button"
-            :disabled="launchingAllJobs"
-            class="flex items-center px-5 py-2.5 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
-            :class="{ 'animate-pulse': launchingAllJobs }"
-            @click="launchAllModalOpened = true"
-          >
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              title="Force cancel a running job"
+              class="flex items-center justify-center w-10 h-10 text-red-700 transition-all duration-200 border border-red-300 dark:text-red-300 bg-red-50 dark:bg-red-900/20 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/40 dark:border-red-700 active:scale-95"
+              @click="openCancelJobModal"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z"
+                />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              :disabled="launchingAllJobs"
+              class="flex items-center px-5 py-2.5 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
+              :class="{ 'animate-pulse': launchingAllJobs }"
+              @click="launchAllModalOpened = true"
+            >
             <svg
               v-if="!launchingAllJobs"
               xmlns="http://www.w3.org/2000/svg"
@@ -175,7 +198,8 @@
               />
             </svg>
             {{ launchingAllJobs ? "Launching…" : "Launch all jobs" }}
-          </button>
+            </button>
+          </div>
         </div>
 
         <div v-if="jobs.length === 0" class="flex w-full text-3xl text-center">
@@ -398,6 +422,98 @@
       </div>
     </div>
 
+    <div
+      v-if="cancelJobModalOpened"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      tabindex="0"
+      @click.self="closeCancelJobModal"
+      @keydown.escape="closeCancelJobModal"
+    >
+      <div
+        class="relative w-full max-w-md p-6 mx-4 bg-white border border-gray-200 shadow-2xl dark:bg-gray-900 rounded-3xl dark:border-gray-700"
+      >
+        <div
+          class="flex items-center justify-between pb-4 border-b border-gray-200 border-dashed dark:border-gray-700"
+        >
+          <h2 class="text-2xl text-gray-900 font-handwriting dark:text-white">
+            Force cancel job
+          </h2>
+          <button
+            class="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:text-neutral-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+            :disabled="cancellingJob"
+            @click="closeCancelJobModal"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <p class="mt-4 text-sm text-gray-700 dark:text-gray-300 font-handwriting">
+          Select a running job to request cancellation. The agent will stop it on
+          the next check.
+        </p>
+
+        <div v-if="runningJobs.length === 0" class="mt-4">
+          <p class="text-sm text-gray-500 dark:text-gray-400 font-handwriting">
+            No running jobs right now.
+          </p>
+        </div>
+
+        <div v-else class="mt-4">
+          <label
+            class="block mb-2 text-sm text-gray-700 font-handwriting dark:text-gray-200"
+          >
+            Running job
+          </label>
+          <select
+            v-model="selectedRunningJobId"
+            class="w-full px-4 py-3 text-gray-900 transition-colors duration-200 border border-gray-300 dark:text-gray-100 bg-gray-50 dark:bg-gray-800/80 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 dark:focus:ring-white dark:focus:border-white font-handwriting"
+          >
+            <option disabled value="">Select a job</option>
+            <option
+              v-for="job in runningJobs"
+              :key="job.id"
+              :value="job.id"
+            >
+              {{ job.title }} · {{ job.hostname }}
+              {{ job.cancelRequestedAt ? "(stopping…)" : "" }}
+            </option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            type="button"
+            class="px-4 py-2 text-gray-700 transition-colors duration-200 bg-gray-100 border border-gray-300 font-handwriting dark:text-gray-200 dark:bg-gray-800/80 dark:border-gray-600 rounded-2xl hover:bg-gray-200 dark:hover:bg-gray-700/80"
+            :disabled="cancellingJob"
+            @click="closeCancelJobModal"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 text-white transition-all duration-200 transform bg-red-600 border border-red-700 shadow-lg font-handwriting rounded-2xl hover:bg-red-700 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            :disabled="cancellingJob || !selectedRunningJobId"
+            @click="confirmCancelJob"
+          >
+            {{ cancellingJob ? "Cancelling…" : "Force cancel" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <JobResultModal
       v-if="selectedJobIdToShowLogs"
       :job-id="selectedJobIdToShowLogs"
@@ -427,11 +543,18 @@ const jobsCount = ref(0);
 const selectedJobIdToShowLogs = ref("");
 const launchAllModalOpened = ref(false);
 const launchingAllJobs = ref(false);
+const cancelJobModalOpened = ref(false);
+const selectedRunningJobId = ref("");
+const cancellingJob = ref(false);
 
 const uniqueJobTitles = computed(() => {
   const titles = jobs.value.map(j => j.title).filter(Boolean) as string[];
   return [...new Set(titles)];
 });
+
+const runningJobs = computed(() =>
+  jobs.value.filter(job => job.statusCode === -1 && !job.neverExecuted),
+);
 
 const { notify } = useNotification();
 
@@ -472,6 +595,58 @@ const confirmLaunchAllJobs = async () => {
     }
   } finally {
     launchingAllJobs.value = false;
+  }
+};
+
+const openCancelJobModal = () => {
+  selectedRunningJobId.value = runningJobs.value[0]?.id ?? "";
+  cancelJobModalOpened.value = true;
+};
+
+const closeCancelJobModal = () => {
+  cancelJobModalOpened.value = false;
+  selectedRunningJobId.value = "";
+};
+
+const confirmCancelJob = async () => {
+  if (!selectedRunningJobId.value) {
+    return;
+  }
+
+  cancellingJob.value = true;
+
+  try {
+    const response = await fetch(
+      `${config.public.apiEndpoint}/jobs/${selectedRunningJobId.value}/cancel`,
+      {
+        credentials: "include",
+        method: "POST",
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      message?: string;
+    };
+
+    if (!response.ok) {
+      throw new Error(data.message ?? `Failed to cancel job (${response.status})`);
+    }
+
+    await refreshJobs();
+    closeCancelJobModal();
+    notify({
+      title: "Stop requested",
+      type: "success",
+      text: data.message ?? "The agent will stop this job shortly",
+    });
+  } catch (error) {
+    notify({
+      title: "Failed to cancel job",
+      type: "error",
+      text: error instanceof Error ? error.message : undefined,
+    });
+  } finally {
+    cancellingJob.value = false;
   }
 };
 

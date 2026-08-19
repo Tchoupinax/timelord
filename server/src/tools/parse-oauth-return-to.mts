@@ -1,3 +1,5 @@
+export const localOAuthRedirectUri = "http://localhost:9988/callback";
+
 export function parseOAuthReturnTo(
   raw: string | undefined,
   uiUrl: string,
