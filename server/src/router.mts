@@ -130,8 +130,10 @@ export function router(fastify: FastifyInstance) {
             statusCode: number;
             finalState?: string;
             statusComment?: string;
+            cancelRequestedAt: null;
           } = {
             statusCode: body.statusCode,
+            cancelRequestedAt: null,
           };
 
           if (
