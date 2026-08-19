@@ -1,6 +1,11 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalPassThroughEnv": [
+    "API_URL",
+    "FNOX_PROFILE",
+    "TIMELORD_REMOTE_API"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"]
@@ -22,6 +27,10 @@
       "persistent": true
     },
     "watch:prod": {
+      "cache": false,
+      "persistent": true
+    },
+    "watch:front": {
       "cache": false,
       "persistent": true
     }

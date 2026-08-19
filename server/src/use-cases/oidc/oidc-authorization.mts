@@ -4,10 +4,20 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../../logger.mts";
 import { computeAuthorizationUrl } from "../../tools/compute-authorization-url.mts";
+import {
+  cookieSecureForUrl,
+  parseOAuthReturnTo,
+} from "../../tools/parse-oauth-return-to.mts";
 import { env } from "../../tools/env.mts";
 
+const oauthCookieMaxAgeSeconds = 60 * 10;
+
 export async function oidcAuthorization(
-  _: FastifyRequest,
+  request: FastifyRequest<{
+    Querystring: {
+      return_to?: string;
+    };
+  }>,
   reply: FastifyReply,
 ) {
   const clientId =
@@ -22,9 +32,29 @@ export async function oidcAuthorization(
     return;
   }
 
+  const returnTo = parseOAuthReturnTo(request.query.return_to, env.UI_URL);
+  const redirectUri = returnTo
+    ? `${returnTo.origin}/api/callback`
+    : `${env.API_URL}/callback`;
+  const postAuthRedirect = returnTo?.origin ?? env.UI_URL;
+
+  if (returnTo) {
+    const secure = cookieSecureForUrl(returnTo.origin);
+    const cookieOptions = {
+      httpOnly: true,
+      path: "/",
+      maxAge: oauthCookieMaxAgeSeconds,
+      sameSite: "lax" as const,
+      secure,
+    };
+
+    reply.setCookie("timelord-oauth-redirect-uri", redirectUri, cookieOptions);
+    reply.setCookie("timelord-oauth-return-to", postAuthRedirect, cookieOptions);
+  }
+
   const authUrl = await computeAuthorizationUrl({
     clientId,
-    redirectUri: `${env.API_URL}/callback`,
+    redirectUri,
     scope: ["profile", "groups", "email"],
     state: randomUUID(),
   });

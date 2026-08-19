@@ -8,6 +8,7 @@
     "build": "nuxt build",
     "watch": "nuxt dev",
     "watch:prod": "nuxt dev",
+    "watch:front": "fnox exec --profile front -- nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

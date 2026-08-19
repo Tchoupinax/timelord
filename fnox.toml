@@ -17,6 +17,9 @@ POSTGRES_PASSWORD = { default = "mysecret" }
 POSTGRES_PORT = { default = "5439" }
 POSTGRES_USERNAME = { default = "postgres" }
 
+[profiles.front.secrets]
+TIMELORD_REMOTE_API = { default = "https://crons.mysupercloud.dev/api" }
+
 [profiles.production.providers.vault_prod]
 type = "vault"
 address = "https://vault.mysupercloud.dev"
