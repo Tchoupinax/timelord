@@ -1,0 +1,14 @@
+title = "timelord gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "local artifacts not checked into git"
+paths = [
+  '''(?:^|/)server/tmp(?:/.*)?$''',
+  '''(?:^|/)server/prisma/generated(?:/.*)?$''',
+  '''(?:^|/)dist(?:/.*)?$''',
+  '''(?:^|/)\.turbo(?:/.*)?$''',
+  '''(?:^|/)fnox\.local\.toml$''',
+]
