@@ -211,9 +211,7 @@ async function trySelectCronJob(
           userId: store.userId,
           hostname: identity,
           title: metadata.title,
-          cron: metadata.cron,
           nextPlannedExecution: metadata.nextDate,
-          statusCode: { in: [-1, 0] },
         },
       });
 
