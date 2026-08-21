@@ -125,7 +125,7 @@
       <button
         class="flex items-center justify-center w-8 h-8 text-gray-700 transition-colors duration-200 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800/20"
         title="Requeue job"
-        @click="putJobInQueue(job.title)"
+        @click="putJobInQueue(job.title, job.hostname)"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -187,7 +187,7 @@ const viewResult = () => {
   emit("view-result", props.job.id);
 };
 
-const putJobInQueue = async (title: string) => {
+const putJobInQueue = async (title: string, hostname: string | null) => {
   const config = useRuntimeConfig();
   const url = `${config.public.apiEndpoint}/jobs/queue`;
 
@@ -197,7 +197,10 @@ const putJobInQueue = async (title: string) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({
+      title,
+      ...(hostname ? { hostname } : {}),
+    }),
   })
     .then(() => {
       notify({ title: "Job added in the queue", type: "success", text: title });

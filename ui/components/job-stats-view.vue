@@ -60,7 +60,7 @@
               :disabled="launchingTitle === job.title"
               class="flex items-center px-4 py-2 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
               :class="{ 'animate-pulse': launchingTitle === job.title }"
-              @click="startJobNow(job.title)"
+              @click="startJobNow(job.title, job.hostname)"
             >
               <svg
                 v-if="launchingTitle !== job.title"
@@ -324,7 +324,7 @@ const computedJobs = computed(() => {
   });
 });
 
-const startJobNow = async (title: string) => {
+const startJobNow = async (title: string, hostname: string) => {
   const config = useRuntimeConfig();
   const url = `${config.public.apiEndpoint}/jobs/queue`;
   launchingTitle.value = title;
@@ -336,7 +336,7 @@ const startJobNow = async (title: string) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ title }),
+      body: JSON.stringify({ title, hostname }),
     });
     notify({ title: "Job added in the queue", type: "success", text: title });
     launchedTitles.value.add(title);

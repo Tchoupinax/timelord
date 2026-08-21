@@ -11,15 +11,16 @@ import { jobsDispatchedTotal } from "#src/tools/metrics.mts";
 import fs from "fs";
 
 import {
-  getActiveCronJobs,
-  isCronPastStartWindow,
-} from "./cron-priority.mts";
-import {
   buildCronPeriodAttemptWhere,
   getCronPeriodStart,
 } from "./cron-period.mts";
+import {
+  getActiveCronJobs,
+  isCronPastStartWindow,
+} from "./cron-priority.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
+import { agentMatchesQueueTarget } from "./queue-target.mts";
 
 export async function getJob() {
   const store = getRobotStore();
@@ -110,75 +111,60 @@ async function getOneJob(
   const scheduledJob = await trySelectCronJob(metadataFiles, files, identity);
   if (scheduledJob) {
     if (scheduledJob.title) {
-      await prisma.jobQueue.deleteMany({
-        where: {
-          title: scheduledJob.title,
-          userId: store.userId,
-        },
+      await deleteMatchingQueueEntries({
+        userId: store.userId,
+        title: scheduledJob.title,
+        agentIdentity: identity,
       });
     }
 
     return scheduledJob;
   }
 
-  const queuedJob = await prisma.jobQueue.findFirst({
+  const queuedJobs = await prisma.jobQueue.findMany({
     where: {
       userId: store.userId,
     },
     orderBy: {
       createdAt: "asc",
     },
-    select: {
-      title: true,
-    },
   });
 
-  const cronObject: Cron = {
-    file: "",
-    cron: "",
-    title: "",
-    nextDate: "",
-    keepLastCount: -1,
-  };
-
-  if (queuedJob && metadataFiles.map(m => m.title).includes(queuedJob?.title)) {
-    logger.info(`Queued job detected "${queuedJob.title}"`);
-
-    const job = metadataFiles.find(m => m.title === queuedJob.title)!;
-    const jobIndex = metadataFiles.findIndex(m => m.title === queuedJob.title);
-    const periodStart = getCronPeriodStart(job);
-
-    if (periodStart) {
-      const alreadyAttempted = await prisma.job.findFirst({
-        where: buildCronPeriodAttemptWhere({
-          userId: store.userId,
-          hostname: identity,
-          title: job.title,
-          periodStart,
-        }),
-      });
-
-      if (alreadyAttempted) {
-        await prisma.jobQueue.deleteMany({
-          where: {
-            title: job.title,
-            userId: store.userId,
-          },
-        });
-        return await getOneJob(configs, identity);
-      }
+  for (const queuedJob of queuedJobs) {
+    if (!agentMatchesQueueTarget(identity, queuedJob.hostname)) {
+      continue;
     }
+
+    const job = metadataFiles.find(metadata => metadata.title === queuedJob.title);
+    if (!job) {
+      continue;
+    }
+
+    const jobIndex = metadataFiles.findIndex(metadata => metadata.title === queuedJob.title);
+    logger.info(`Queued job detected "${queuedJob.title}" for "${identity}"`);
 
     try {
       const file = await injectSecret(
         fs.readFileSync(files[jobIndex] as string, "utf8"),
       );
 
-      cronObject.title = job.title;
-      cronObject.cron = "Manual";
-      cronObject.nextDate = job.nextDate;
-      cronObject.keepLastCount = job.keepLastCount ?? -1;
-      cronObject.file = file;
+      await prisma.jobQueue.delete({
+        where: {
+          jobId: {
+            title: queuedJob.title,
+            userId: store.userId,
+            hostname: queuedJob.hostname,
+          },
+        },
+      });
+
+      return {
+        file,
+        title: job.title,
+        cron: "Manual",
+        nextDate: job.nextDate,
+        keepLastCount: job.keepLastCount ?? -1,
+      };
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       logger.error(
@@ -195,28 +181,52 @@ async function getOneJob(
       await prisma.jobQueue.delete({
         where: {
           jobId: {
-            title: job.title,
+            title: queuedJob.title,
             userId: store.userId,
+            hostname: queuedJob.hostname,
           },
         },
       });
       return await getOneJob(configs, identity);
     }
-
-    await prisma.jobQueue.delete({
-      where: {
-        jobId: {
-          title: job.title,
-          userId: store.userId,
-        },
-      },
-    });
-    return cronObject;
   }
 
   throw new Error(
     `No cron object was found for this agent, aborting ... (${identity})`,
   );
+}
+
+async function deleteMatchingQueueEntries({
+  userId,
+  title,
+  agentIdentity,
+}: {
+  userId: string;
+  title: string;
+  agentIdentity: string;
+}) {
+  const entries = await prisma.jobQueue.findMany({
+    where: {
+      title,
+      userId,
+    },
+  });
+
+  for (const entry of entries) {
+    if (!agentMatchesQueueTarget(agentIdentity, entry.hostname)) {
+      continue;
+    }
+
+    await prisma.jobQueue.delete({
+      where: {
+        jobId: {
+          title: entry.title,
+          userId: entry.userId,
+          hostname: entry.hostname,
+        },
+      },
+    });
+  }
 }
 
 async function trySelectCronJob(

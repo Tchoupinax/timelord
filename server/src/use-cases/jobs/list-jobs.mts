@@ -9,6 +9,7 @@ import path from "path";
 import { extractMetadata } from "../../functions/extract-metadata.mts";
 import { prisma } from "../../prisma-client.mts";
 import { getHumanStore } from "../../store.mts";
+import { queueTargetMatchesJobHostname } from "./get-job/queue-target.mts";
 import { env } from "../../tools/env.mts";
 
 type ExternalJob = Job & {
@@ -110,7 +111,11 @@ export async function listJobs(
 
   reply.send({
     jobs: returnedJob.map(job => {
-      const foundJob = queuedJobs.find(qj => qj.title === job.title);
+      const foundJob = queuedJobs.find(
+        queuedJob =>
+          queuedJob.title === job.title &&
+          queueTargetMatchesJobHostname(queuedJob.hostname, job.hostname),
+      );
       if (foundJob) {
         return {
           ...job,
