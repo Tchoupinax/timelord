@@ -100,7 +100,7 @@ describe("when a cron job was cancelled in the current period", () => {
 
     await axios.post(
       `http://localhost:${E2E_PORT}/jobs/queue`,
-      { title: jobTitle },
+      { title: jobTitle, hostname: agentHostname },
       { headers: { "Content-Type": "application/json" } },
     );
 

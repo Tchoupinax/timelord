@@ -9,10 +9,11 @@ import { jobQueueAddedTotal } from "../../tools/metrics.mts";
 const payload = z.object({
   title: z.string(),
   userId: z.uuid(),
+  hostname: z.string().optional(),
 });
 
 export async function addJobToQueue(
-  request: FastifyRequest<{ Body: { title: string } }>,
+  request: FastifyRequest<{ Body: { title: string; hostname?: string } }>,
   reply: FastifyReply,
 ) {
   const store = getHumanStore();
@@ -20,6 +21,7 @@ export async function addJobToQueue(
   const { success, data, error } = payload.safeParse({
     title: request.body.title,
     userId: store.userId,
+    hostname: request.body.hostname,
   });
 
   if (!success) {
@@ -29,7 +31,11 @@ export async function addJobToQueue(
 
   try {
     await prisma.jobQueue.create({
-      data,
+      data: {
+        title: data.title,
+        userId: data.userId,
+        hostname: data.hostname?.toLowerCase() ?? "",
+      },
     });
 
     jobQueueAddedTotal.inc();

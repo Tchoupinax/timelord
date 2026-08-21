@@ -88,10 +88,11 @@ model GitConfig {
 model JobQueue {
   title     String
   userId    String   @map("user_id")
+  hostname  String   @default("") /// Git agent folder that should run this queued job
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@id(name: "jobId", [title, userId])
+  @@id(name: "jobId", [title, userId, hostname])
 
   @@map("job_queue")
 }

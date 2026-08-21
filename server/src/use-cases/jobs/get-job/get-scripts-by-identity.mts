@@ -4,6 +4,8 @@ import { env } from "#src/tools/env.mts";
 import fs from "fs";
 import path from "path";
 
+import { resolveIdentityFolder } from "./queue-target.mts";
+
 export function getSriptsByIdentity(
   configs: Array<GitConfig>,
   identity: string,
@@ -22,10 +24,11 @@ export function getSriptsByIdentity(
 
   let files: Array<string> = [];
   for (const folder of folders) {
-    if (fs.existsSync(folder)) {
+    const resolvedFolder = resolveIdentityFolder(folder);
+    if (resolvedFolder) {
       files = [
         ...files,
-        ...fs.readdirSync(folder).map(file => `${folder}/${file}`),
+        ...fs.readdirSync(resolvedFolder).map(file => `${resolvedFolder}/${file}`),
       ];
     }
   }

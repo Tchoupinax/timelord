@@ -29,7 +29,7 @@ credential_command = "vault token lookup >/dev/null 2>&1 && vault print token ||
 [profiles.production.secrets]
 DATABASE_URL = { default = "_" }
 POSTGRES_DATABASE = { default = "timelord" }
-POSTGRES_HOSTNAME = { default = "10.20.0.10" }
+POSTGRES_HOSTNAME = { default = "10.20.4.15" }
 POSTGRES_PASSWORD = { provider = "vault_prod", value = "timelord/databasePassword" }
 POSTGRES_PORT = { default = "5432" }
 POSTGRES_USERNAME = { default = "timelord" }
