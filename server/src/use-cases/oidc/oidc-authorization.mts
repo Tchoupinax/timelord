@@ -6,8 +6,8 @@ import { logger } from "../../logger.mts";
 import { computeAuthorizationUrl } from "../../tools/compute-authorization-url.mts";
 import {
   cookieSecureForUrl,
-  localOAuthRedirectUri,
   parseOAuthReturnTo,
+  resolveOAuthRedirectUri,
 } from "../../tools/parse-oauth-return-to.mts";
 import { env } from "../../tools/env.mts";
 
@@ -34,9 +34,7 @@ export async function oidcAuthorization(
   }
 
   const returnTo = parseOAuthReturnTo(request.query.return_to, env.UI_URL);
-  const redirectUri = returnTo
-    ? localOAuthRedirectUri
-    : `${env.API_URL}/callback`;
+  const redirectUri = resolveOAuthRedirectUri(returnTo, env.API_URL);
   const postAuthRedirect = returnTo?.origin ?? env.UI_URL;
 
   if (returnTo) {

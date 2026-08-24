@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   cookieSecureForUrl,
+  isLocalOAuthReturnTo,
   localOAuthRedirectUri,
   parseOAuthReturnTo,
+  resolveOAuthRedirectUri,
 } from "./parse-oauth-return-to.mts";
 
 describe("parseOAuthReturnTo", () => {
@@ -34,6 +36,46 @@ describe("parseOAuthReturnTo", () => {
 describe("localOAuthRedirectUri", () => {
   it("uses the Authelia-registered localhost callback", () => {
     expect(localOAuthRedirectUri).toBe("http://localhost:9988/callback");
+  });
+});
+
+describe("resolveOAuthRedirectUri", () => {
+  const apiUrl = "https://crons.mysupercloud.dev/api";
+
+  it("uses localhost callback only for local return_to origins", () => {
+    const localReturnTo = parseOAuthReturnTo(
+      "http://localhost:3000",
+      "https://crons.mysupercloud.dev",
+    );
+    expect(resolveOAuthRedirectUri(localReturnTo, apiUrl)).toBe(
+      localOAuthRedirectUri,
+    );
+  });
+
+  it("uses API callback for production UI return_to", () => {
+    const productionReturnTo = parseOAuthReturnTo(
+      "https://crons.mysupercloud.dev",
+      "https://crons.mysupercloud.dev",
+    );
+    expect(resolveOAuthRedirectUri(productionReturnTo, apiUrl)).toBe(
+      "https://crons.mysupercloud.dev/api/callback",
+    );
+  });
+
+  it("uses API callback when return_to is absent", () => {
+    expect(resolveOAuthRedirectUri(null, apiUrl)).toBe(
+      "https://crons.mysupercloud.dev/api/callback",
+    );
+  });
+});
+
+describe("isLocalOAuthReturnTo", () => {
+  it("detects localhost and 127.0.0.1", () => {
+    expect(isLocalOAuthReturnTo(new URL("http://localhost:3000"))).toBe(true);
+    expect(isLocalOAuthReturnTo(new URL("http://127.0.0.1:3000"))).toBe(true);
+    expect(
+      isLocalOAuthReturnTo(new URL("https://crons.mysupercloud.dev")),
+    ).toBe(false);
   });
 });
 

@@ -1,5 +1,21 @@
 export const localOAuthRedirectUri = "http://localhost:9988/callback";
 
+export function isLocalOAuthReturnTo(url: URL): boolean {
+  return url.hostname === "localhost" || url.hostname === "127.0.0.1";
+}
+
+export function resolveOAuthRedirectUri(
+  returnTo: URL | null,
+  apiUrl: string,
+): string {
+  if (returnTo && isLocalOAuthReturnTo(returnTo)) {
+    return localOAuthRedirectUri;
+  }
+
+  const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+  return `${normalizedApiUrl}/callback`;
+}
+
 export function parseOAuthReturnTo(
   raw: string | undefined,
   uiUrl: string,
