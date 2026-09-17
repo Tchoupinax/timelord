@@ -37,5 +37,6 @@ minimumReleaseAgeExclude:
 - '@turbo/windows-64@2.9.17'
 - '@turbo/windows-arm64@2.9.17'
 - turbo@2.9.17
+- knip@6.36.0
 
 minimumReleaseAgeStrict: true

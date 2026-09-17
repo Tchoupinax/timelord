@@ -7,7 +7,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "Timelord",
   tagline: "Orchestrate your CRONs easily ⏰",
-  favicon: "img/timelord-logo.svg",
+  favicon: "img/favicon.ico",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -74,7 +74,7 @@ const config: Config = {
       title: "Timelord",
       logo: {
         alt: "Timelord Logo",
-        src: "img/timelord-logo.svg",
+        src: "img/timelord-mark.svg",
       },
       items: [
         {
