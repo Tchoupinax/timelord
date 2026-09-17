@@ -1,0 +1,64 @@
+<script setup lang="ts">
+const uid = useId();
+const wedgeGradientId = `timelord-wedge-${uid}`;
+</script>
+
+<template>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 64 64"
+    fill="none"
+    aria-hidden="true"
+    v-bind="$attrs"
+  >
+    <defs>
+      <linearGradient
+        :id="wedgeGradientId"
+        x1="18"
+        y1="14"
+        x2="46"
+        y2="50"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset="0%" stop-color="#818cf8" />
+        <stop offset="100%" stop-color="#6366f1" />
+      </linearGradient>
+    </defs>
+    <!-- Agent nodes -->
+    <circle cx="12" cy="20" r="4" fill="#a5b4fc" />
+    <circle cx="52" cy="20" r="4" fill="#a5b4fc" />
+    <circle cx="32" cy="54" r="4" fill="#a5b4fc" />
+    <path
+      d="M15.5 22.5 26 30 M48.5 22.5 38 30 M32 50 32 38"
+      stroke="#c7d2fe"
+      stroke-width="2"
+      stroke-linecap="round"
+    />
+    <!-- Scheduler dial -->
+    <circle cx="32" cy="32" r="18" stroke="#312e81" stroke-width="2.5" />
+    <circle cx="32" cy="32" r="14" fill="#f8fafc" />
+    <path
+      :fill="`url(#${wedgeGradientId})`"
+      d="M32 32 32 18 A14 14 0 0 1 44.1 26.1 Z"
+    />
+    <circle cx="32" cy="32" r="2.5" fill="#312e81" />
+    <line
+      x1="32"
+      y1="32"
+      x2="32"
+      y2="21"
+      stroke="#312e81"
+      stroke-width="2.25"
+      stroke-linecap="round"
+    />
+    <line
+      x1="32"
+      y1="32"
+      x2="41"
+      y2="27"
+      stroke="#4338ca"
+      stroke-width="1.75"
+      stroke-linecap="round"
+    />
+  </svg>
+</template>

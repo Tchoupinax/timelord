@@ -6,24 +6,7 @@
       <div class="mx-auto max-w-7xl">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-6">
-            <div
-              class="relative flex items-center justify-center bg-black border border-gray-300 w-14 h-14 dark:bg-white rounded-2xl dark:border-gray-600"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-8 h-8 text-white dark:text-black"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                />
-              </svg>
-            </div>
+            <TimelordMark class="w-14 h-14 shrink-0" />
             <h1
               class="relative text-3xl text-gray-900 font-handwriting dark:text-white"
             >
