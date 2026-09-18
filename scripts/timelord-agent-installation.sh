@@ -46,6 +46,9 @@ sudo mv timelord-agent /usr/local/bin/timelord
 
 # On Linux, we start the program with a service
 if [[ $OS = "Linux" ]]; then
+  WORKING_DIRECTORY="/var/lib/timelord-agent"
+  sudo mkdir -p "$WORKING_DIRECTORY"
+
   cat <<EOF >/tmp/timelord.service
 [Unit]
 Description=timelord-agent
@@ -53,7 +56,7 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/tmp
+WorkingDirectory=$WORKING_DIRECTORY
 ExecStart=/usr/local/bin/timelord
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
