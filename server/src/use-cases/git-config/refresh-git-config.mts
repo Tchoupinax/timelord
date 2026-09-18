@@ -61,13 +61,21 @@ export async function refreshGitConfig() {
   }
 }
 
+function usesSshTransport(sshUrl: string) {
+  return !sshUrl.startsWith("file:");
+}
+
 async function cloneRepo(
   configId: string,
   name: string,
   sshUrl: string,
   sshKeyPath: string,
 ) {
-  process.env.GIT_SSH_COMMAND = `ssh -i ${sshKeyPath} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no`;
+  if (usesSshTransport(sshUrl)) {
+    process.env.GIT_SSH_COMMAND = `ssh -i ${sshKeyPath} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no`;
+  } else {
+    delete process.env.GIT_SSH_COMMAND;
+  }
 
   try {
     const gitClient = simpleGit(env.GIT_CONFIGS_REPOSITORY, {});

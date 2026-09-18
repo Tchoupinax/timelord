@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
 import { requestContext } from "@fastify/request-context";
 
 import type { FastifyReply, FastifyRequest } from "fastify";
 
+import { DEV_USER_ID } from "../dev-user.mts";
 import { logger } from "../logger.mts";
 import { env } from "../tools/env.mts";
 
@@ -16,7 +16,7 @@ export async function extractHumanMetadata(
 
   if (env.DISABLE_AUTHENTICATION) {
     requestContext.set("store", {
-      userId: randomUUID(),
+      userId: DEV_USER_ID,
       isRobot: false,
       isHuman: true,
     });

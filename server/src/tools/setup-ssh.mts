@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { logger } from "../logger.mts";
 import { prisma } from "../prisma-client.mts";
@@ -20,5 +21,5 @@ export async function setupSSH() {
 }
 
 export function getSshFilePath(name: string): string {
-  return `${env.SSH_KEYS_REPOSITORY}/${name}.key`;
+  return path.resolve(env.SSH_KEYS_REPOSITORY, `${name}.key`);
 }
