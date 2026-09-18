@@ -12,6 +12,7 @@
     "migrate": "DATABASE_URL=postgres://postgres:mysecret@localhost:5439/postgres npx prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "seed": "DATABASE_URL=postgres://postgres:mysecret@localhost:5439/postgres npx prisma db seed",
+    "simulate-live-logs": "fnox exec -- npx tsx scripts/simulate-live-logs.mts",
     "studio": "fnox exec -- prisma studio",
     "studio:prod": "fnox exec --profile production -- prisma studio",
     "test": "vitest run --config test/config/vitest.unit.config.mts",

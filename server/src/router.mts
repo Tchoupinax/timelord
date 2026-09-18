@@ -57,6 +57,7 @@ export function router(fastify: FastifyInstance) {
   fastify.register(import("@fastify/cors"), {
     origin: env.UI_URL,
     credentials: true,
+    exposedHeaders: ["X-Max-Log-Index", "X-Job-Running"],
   });
   fastify.register(import("@fastify/cookie"));
   fastify.register(import("@fastify/formbody"));
