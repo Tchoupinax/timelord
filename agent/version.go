@@ -5,13 +5,8 @@ import (
 	"os"
 	"slices"
 
+	"github.com/Tchoupinax/timelord/agent/buildinfo"
 	"github.com/fatih/color"
-)
-
-var (
-	version   string
-	buildDate string
-	commit    string
 )
 
 func cliCommandDisplayVersion(args []string) {
@@ -23,9 +18,9 @@ func cliCommandDisplayVersion(args []string) {
 		fmt.Println()
 		fmt.Println(bold("⚡️ Timelord Agent"))
 		fmt.Println()
-		fmt.Println("build date: ", bold(buildDate))
-		fmt.Println("version:    ", bold(version))
-		fmt.Println("commit:     ", bold(commit))
+		fmt.Println("build date: ", bold(buildinfo.BuildDate))
+		fmt.Println("version:    ", bold(buildinfo.Version))
+		fmt.Println("commit:     ", bold(buildinfo.Commit))
 		fmt.Println()
 		os.Exit(0)
 	}

@@ -16,7 +16,7 @@ builds:
   flags:
   - -trimpath
   ldflags:
-  - -s -w -X "main.version={{.Version}}" -X "main.commit={{.FullCommit}}" -X "main.buildDate={{.Date}}"
+  - -s -w -X "github.com/Tchoupinax/timelord/agent/buildinfo.Version={{.Version}}" -X "github.com/Tchoupinax/timelord/agent/buildinfo.Commit={{.FullCommit}}" -X "github.com/Tchoupinax/timelord/agent/buildinfo.BuildDate={{.Date}}"
 
 archives:
 - formats: [ "tar.gz" ]
