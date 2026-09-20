@@ -2,6 +2,8 @@ package api
 
 import (
 	"os"
+
+	"github.com/Tchoupinax/timelord/agent/buildinfo"
 )
 
 func ComputeHeaders() map[string]string {
@@ -15,7 +17,7 @@ func ComputeHeaders() map[string]string {
 			"X-Timelord-Hostname":    hostname,
 			"X-Timelord-Agent-Token": masterToken,
 			"Content-Type":           "application/json",
-			"User-Agent":             "timelord agent",
+			"User-Agent":             buildinfo.UserAgent(),
 		}
 	}
 
@@ -23,7 +25,7 @@ func ComputeHeaders() map[string]string {
 		"X-Timelord-Hostname":    hostname,
 		"X-Timelord-Agent-Token": os.Getenv("AGENT_TOKEN"),
 		"Content-Type":           "application/json",
-		"User-Agent":             "timelord agent",
+		"User-Agent":             buildinfo.UserAgent(),
 	}
 }
 

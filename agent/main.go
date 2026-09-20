@@ -11,6 +11,7 @@ import (
 
 	api "github.com/Tchoupinax/timelord/agent/api"
 	"github.com/Tchoupinax/timelord/agent/bash"
+	"github.com/Tchoupinax/timelord/agent/buildinfo"
 	"github.com/Tchoupinax/timelord/agent/file"
 	_ "github.com/Tchoupinax/timelord/agent/logger"
 	"github.com/Tchoupinax/timelord/agent/updater"
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	updater.StartAutoUpdateLoop(updater.Config{
-		Version: version,
+		Version: buildinfo.Version,
 		HasRunningJobs: func() bool {
 			return runningJobs.Load() > 0
 		},
@@ -45,7 +46,7 @@ func main() {
 }
 
 func processJob(apiUrl string) {
-	log.Debug().Str("version", version).Msg("Start job processing task in background")
+	log.Debug().Str("version", buildinfo.Version).Msg("Start job processing task in background")
 
 	for range time.Tick(time.Second * time.Duration(5)) {
 		if runningJobs.Load() > 0 {
@@ -156,15 +157,16 @@ func getJob(url string) *api.ResponseData {
 }
 
 func heartbeat(apiUrl string) {
-	log.Debug().Str("version", version).Msg("Start heartbeat")
-
-	if version == "" {
-		version = "l-01"
+	reportedVersion := buildinfo.Version
+	if reportedVersion == "" {
+		reportedVersion = "l-01"
 	}
+
+	log.Debug().Str("version", reportedVersion).Msg("Start heartbeat")
 
 	for range time.Tick(time.Second * time.Duration(10)) {
 		payload := map[string]any{
-			"version": version,
+			"version": reportedVersion,
 		}
 		jsonData, _ := json.Marshal(payload)
 
