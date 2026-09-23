@@ -1,13 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { getOidcConfiguration } from "./oidc-configuration.mts";
 
 describe("OIDC configuration", () => {
-  it("zfe", async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("parses the discovery document", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({
+          authorization_endpoint: "https://sso.example/authorize",
+          token_endpoint: "https://sso.example/token",
+        }),
+      }),
+    );
+
     expect(await getOidcConfiguration()).toEqual({
-      authorizationEndpoint: expect.any(String),
-      tokenEndpoint: expect.any(String),
+      authorizationEndpoint: "https://sso.example/authorize",
+      tokenEndpoint: "https://sso.example/token",
     });
   });
 });

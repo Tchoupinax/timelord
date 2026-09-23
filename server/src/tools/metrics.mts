@@ -48,6 +48,12 @@ export const jobsTimedOutTotal = new client.Counter({
   registers: [register],
 });
 
+export const jobsOrphanedTotal = new client.Counter({
+  name: "timelord_jobs_orphaned_total",
+  help: "Running jobs cleared after agent restart or disconnect",
+  registers: [register],
+});
+
 export const jobsCancelRequestedTotal = new client.Counter({
   name: "timelord_jobs_cancel_requested_total",
   help: "Running jobs for which a user requested cancellation",

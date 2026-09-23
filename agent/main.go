@@ -24,6 +24,8 @@ func main() {
 	// Check if the version is asked by flag
 	cliCommandDisplayVersion(os.Args)
 
+	log.Info().Str("instance", api.GetInstanceID()).Msg("Agent runtime instance")
+
 	apiUrl := os.Getenv("API_URL")
 	if apiUrl == "" {
 		apiUrl = "http://localhost:9988"
@@ -70,6 +72,7 @@ func runJob(apiUrl string, data *api.ResponseData) {
 	// The counter gates job polling and the self-update: it must come back down
 	// whatever happens, otherwise the agent stays busy forever.
 	defer runningJobs.Add(-1)
+	defer api.SetActiveJobID("")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -117,11 +120,13 @@ func getJob(url string) *api.ResponseData {
 	}
 
 	log.Info().Msg("🚀 File received")
+	api.SetActiveJobID(data.Id)
 
 	// Decode the Base64 string
 	decodedBytes, err := base64.StdEncoding.DecodeString(data.File)
 	if err != nil {
 		log.Error().Err(err).Msg("Error decoding job script from Base64")
+		api.SetActiveJobID("")
 		return nil
 	}
 
@@ -166,7 +171,8 @@ func heartbeat(apiUrl string) {
 
 	for range time.Tick(time.Second * time.Duration(10)) {
 		payload := map[string]any{
-			"version": reportedVersion,
+			"version":     reportedVersion,
+			"activeJobId": api.GetActiveJobID(),
 		}
 		jsonData, _ := json.Marshal(payload)
 

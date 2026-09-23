@@ -1,9 +1,14 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
+import fs from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import axios from "axios";
 
-import { E2E_PORT, e2eEnv } from "../config/e2e-env.mts";
+import {
+  E2E_PORT,
+  E2E_SSH_KEYS_REPOSITORY,
+  e2eEnv,
+} from "../config/e2e-env.mts";
 
 const healthUrl = `http://127.0.0.1:${E2E_PORT}/health`;
 
@@ -60,6 +65,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     },
     stdio: "inherit",
   });
+
+  fs.mkdirSync(E2E_SSH_KEYS_REPOSITORY, { recursive: true });
 
   const server = spawn("npx", ["tsx", "src/index.mts"], {
     env: {

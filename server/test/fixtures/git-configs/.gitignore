@@ -1,0 +1,5 @@
+# Cloned or initialized during integration tests (simple-git)
+*
+!e2e-crons/
+!e2e-crons/**
+!.gitignore

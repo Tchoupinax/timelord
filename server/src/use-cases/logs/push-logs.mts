@@ -30,16 +30,22 @@ export async function pushLogs(
 
   const { content, createdAt, jobId, index, type } = data;
 
-  await prisma.log.create({
-    data: {
-      content: await hideSecret(content),
-      createdAt,
-      jobId,
-      index,
-      type,
-      userId: store.userId,
-    },
-  });
+  await prisma.$transaction([
+    prisma.log.create({
+      data: {
+        content: await hideSecret(content),
+        createdAt,
+        jobId,
+        index,
+        type,
+        userId: store.userId,
+      },
+    }),
+    prisma.job.update({
+      where: { id: jobId },
+      data: { updatedAt: new Date() },
+    }),
+  ]);
 
   return {};
 }
