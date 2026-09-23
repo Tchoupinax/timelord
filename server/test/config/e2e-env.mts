@@ -8,18 +8,24 @@ const serverRoot = path.resolve(
 
 export const E2E_PORT = 18888;
 
+export const E2E_SSH_KEYS_REPOSITORY = path.join(
+  serverRoot,
+  "test/fixtures/ssh-keys",
+);
+
 export const e2eEnv: Record<string, string> = {
-  NODE_ENV: "test",
   DATABASE_URL: "postgres://postgres:mysecret@localhost:5438/postgres",
-  POSTGRES_USERNAME: "postgres",
-  POSTGRES_PASSWORD: "mysecret",
-  POSTGRES_HOSTNAME: "localhost",
-  POSTGRES_PORT: "5438",
-  POSTGRES_DATABASE: "postgres",
   DISABLE_AUTHENTICATION: "false",
   GIT_CONFIGS_REPOSITORY: path.join(serverRoot, "test/fixtures/git-configs"),
   LOG_LEVEL: "error",
-  OIDC_PROVIDER_IMAGE: "https://example.com/logo.png",
+  NODE_ENV: "test",
   OIDC_CONFIGURATION_URL: "https://example.com/.well-known/openid-configuration",
+  OIDC_PROVIDER_IMAGE: "https://example.com/logo.png",
   PORT: String(E2E_PORT),
+  POSTGRES_DATABASE: "postgres",
+  POSTGRES_HOSTNAME: "localhost",
+  POSTGRES_PASSWORD: "mysecret",
+  POSTGRES_PORT: "5438",
+  POSTGRES_USERNAME: "postgres",
+  SSH_KEYS_REPOSITORY: E2E_SSH_KEYS_REPOSITORY,
 };
