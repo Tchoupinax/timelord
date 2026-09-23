@@ -20,6 +20,7 @@ import {
 } from "./cron-priority.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
+import { syncAgentRuntime } from "../../agents/sync-agent-runtime.mts";
 import { agentMatchesQueueTarget } from "./queue-target.mts";
 
 export async function getJob() {
@@ -93,6 +94,16 @@ async function getOneJob(
   for (const f of files) {
     metadataFiles.push(extractMetadata(fs.readFileSync(f, "utf8")));
   }
+
+  await syncAgentRuntime({
+    userId: store.userId,
+    agentName: store.agentName,
+    hostname: identity,
+    instanceId: store.instanceId,
+    reportsInstanceId: store.reportsInstanceId,
+    activeJobId: store.activeJobId,
+    reportsActiveJobId: store.reportsActiveJobId,
+  });
 
   const agentRunningJob = await prisma.job.findFirst({
     where: {

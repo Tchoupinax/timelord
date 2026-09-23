@@ -22,6 +22,13 @@ export async function extractAgentMetadata(
 
   const agentHostname = request.headers["x-timelord-hostname"] as string;
   const agentToken = request.headers["x-timelord-agent-token"] as string;
+  const activeJobHeader = request.headers["x-timelord-active-job-id"];
+  const reportsActiveJobId = activeJobHeader !== undefined;
+  const activeJobId = reportsActiveJobId ? String(activeJobHeader) : undefined;
+
+  const instanceHeader = request.headers["x-timelord-agent-instance-id"];
+  const reportsInstanceId = instanceHeader !== undefined;
+  const instanceId = reportsInstanceId ? String(instanceHeader) : undefined;
 
   logger.debug("Agent identified as %s, %s", agentHostname, agentToken);
 
@@ -44,6 +51,10 @@ export async function extractAgentMetadata(
           agentName: agentHostname,
           agentHostname: request.headers["x-timelord-hostname"] as string,
           userId: user?.id,
+          activeJobId,
+          reportsActiveJobId,
+          instanceId,
+          reportsInstanceId,
           isRobot: true,
           isHuman: false,
         });
@@ -64,6 +75,10 @@ export async function extractAgentMetadata(
         agentName: agentName ?? "",
         agentHostname: request.headers["x-timelord-hostname"] as string,
         userId: agentUserId,
+        activeJobId,
+        reportsActiveJobId,
+        instanceId,
+        reportsInstanceId,
         isRobot: true,
         isHuman: false,
       });

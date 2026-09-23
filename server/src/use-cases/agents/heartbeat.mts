@@ -1,11 +1,14 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 
-import { prisma } from "../../prisma-client.mts";
 import { getRobotStore } from "../../store.mts";
+import {
+  persistAgentRuntime,
+  syncAgentRuntime,
+} from "./sync-agent-runtime.mts";
 
 export async function agentHeartbeat(
   request: FastifyRequest<{
-    Body: { version: string };
+    Body: { version: string; activeJobId?: string | null };
   }>,
   reply: FastifyReply,
 ) {
@@ -16,23 +19,28 @@ export async function agentHeartbeat(
     return;
   }
 
-  await prisma.agent.upsert({
-    where: {
-      userId: store.userId,
-      name: store.agentName,
-    },
-    create: {
-      token: "",
-      userId: store.userId,
-      name: store.agentName,
-      seenAt: new Date(),
-      version: request.body.version,
-    },
-    update: {
-      seenAt: new Date(),
-      version: request.body.version,
-    },
+  await syncAgentRuntime({
+    userId: store.userId,
+    agentName: store.agentName,
+    hostname: store.agentHostname,
+    instanceId: store.instanceId,
+    reportsInstanceId: store.reportsInstanceId,
+    activeJobId: store.activeJobId,
+    reportsActiveJobId: store.reportsActiveJobId,
   });
+
+  await persistAgentRuntime(
+    {
+      userId: store.userId,
+      agentName: store.agentName,
+      hostname: store.agentHostname,
+      instanceId: store.instanceId,
+      reportsInstanceId: store.reportsInstanceId,
+      activeJobId: store.activeJobId,
+      reportsActiveJobId: store.reportsActiveJobId,
+    },
+    request.body?.version ?? "",
+  );
 
   return "OK";
 }

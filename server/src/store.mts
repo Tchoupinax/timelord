@@ -17,6 +17,12 @@ type StoreHuman = {
 type StoreRobot = {
   agentHostname: string;
   agentName: string;
+  /** Set when the agent sends X-Timelord-Active-Job-Id (value may be empty). */
+  activeJobId?: string;
+  reportsActiveJobId: boolean;
+  /** Process fingerprint from X-Timelord-Agent-Instance-Id (new on each agent start). */
+  instanceId?: string;
+  reportsInstanceId: boolean;
   isHuman: false;
   isRobot: true;
   userId: string;

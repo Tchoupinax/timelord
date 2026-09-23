@@ -62,8 +62,9 @@ model Agent {
   token     String
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
-  seenAt    DateTime? @map("seen_at")
-  version   String?
+  seenAt             DateTime? @map("seen_at")
+  version            String?
+  runtimeInstanceId  String?   @map("runtime_instance_id")
 
   @@map("agents")
 }
