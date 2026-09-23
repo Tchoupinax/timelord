@@ -1,5 +1,8 @@
+import type { Job } from "#prisma";
+
 import { describe, expect, it, vi } from "vitest";
 
+import { generateJob } from "../../../test/entities/job.mts";
 import { prisma } from "../../__mocks__/prisma-client.mts";
 import {
   ORPHANED_JOB_STATUS_COMMENT,
@@ -23,8 +26,8 @@ describe("reconcileRunningJobsForAgent", () => {
     prisma.job.findMany.mockResolvedValue([
       { id: "job-1", title: "Backup" },
       { id: "job-2", title: "Other" },
-    ]);
-    prisma.job.update.mockResolvedValue({});
+    ] as Job[]);
+    prisma.job.update.mockResolvedValue(generateJob({ id: "job-1" }));
 
     await reconcileRunningJobsForAgent({
       userId: "user-1",
@@ -42,8 +45,8 @@ describe("reconcileRunningJobsForAgent", () => {
     prisma.job.findMany.mockResolvedValue([
       { id: "job-1", title: "Backup" },
       { id: "job-2", title: "Other" },
-    ]);
-    prisma.job.update.mockResolvedValue({});
+    ] as Job[]);
+    prisma.job.update.mockResolvedValue(generateJob({ id: "job-1" }));
 
     await reconcileRunningJobsForAgent({
       userId: "user-1",

@@ -1,3 +1,5 @@
+import type { Agent } from "#prisma";
+
 import { describe, expect, it, vi } from "vitest";
 
 import { prisma } from "../../__mocks__/prisma-client.mts";
@@ -21,7 +23,7 @@ describe("syncAgentRuntime", () => {
   it("orphans host jobs when the runtime instance id changes", async () => {
     prisma.agent.findUnique.mockResolvedValue({
       runtimeInstanceId: "old-instance",
-    });
+    } as Agent);
 
     await syncAgentRuntime({
       userId: "user-1",
@@ -40,7 +42,9 @@ describe("syncAgentRuntime", () => {
   });
 
   it("does not orphan on first instance id seen", async () => {
-    prisma.agent.findUnique.mockResolvedValue({ runtimeInstanceId: null });
+    prisma.agent.findUnique.mockResolvedValue({
+      runtimeInstanceId: null,
+    } as Agent);
 
     await syncAgentRuntime({
       userId: "user-1",

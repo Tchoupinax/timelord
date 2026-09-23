@@ -26,6 +26,16 @@ import { agentMatchesQueueTarget } from "./queue-target.mts";
 export async function getJob() {
   const store = getRobotStore();
 
+  await syncAgentRuntime({
+    userId: store.userId,
+    agentName: store.agentName,
+    hostname: store.agentHostname,
+    instanceId: store.instanceId,
+    reportsInstanceId: store.reportsInstanceId,
+    activeJobId: store.activeJobId,
+    reportsActiveJobId: store.reportsActiveJobId,
+  });
+
   const configs = await prisma.gitConfig.findMany({
     where: { userId: store.userId },
   });
@@ -94,16 +104,6 @@ async function getOneJob(
   for (const f of files) {
     metadataFiles.push(extractMetadata(fs.readFileSync(f, "utf8")));
   }
-
-  await syncAgentRuntime({
-    userId: store.userId,
-    agentName: store.agentName,
-    hostname: identity,
-    instanceId: store.instanceId,
-    reportsInstanceId: store.reportsInstanceId,
-    activeJobId: store.activeJobId,
-    reportsActiveJobId: store.reportsActiveJobId,
-  });
 
   const agentRunningJob = await prisma.job.findFirst({
     where: {
