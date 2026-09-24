@@ -9,8 +9,8 @@ import path from "path";
 import { extractMetadata } from "../../functions/extract-metadata.mts";
 import { prisma } from "../../prisma-client.mts";
 import { getHumanStore } from "../../store.mts";
-import { queueTargetMatchesJobHostname } from "./get-job/queue-target.mts";
 import { env } from "../../tools/env.mts";
+import { queueTargetMatchesJobHostname } from "./get-job/queue-target.mts";
 
 type ExternalJob = Job & {
   neverExecuted: boolean;
@@ -99,6 +99,7 @@ export async function listJobs(
       neverExecuted: true,
       keepLastCount: metadata.keepLastCount ?? 0,
       finalState: null,
+      jobTimeoutMinutes: null,
     } satisfies ExternalJob;
   });
 

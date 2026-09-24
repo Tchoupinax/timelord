@@ -157,10 +157,18 @@ func TestJobTimeout(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("TIMELORD_JOB_TIMEOUT", tt.value)
-			if got := jobTimeout(); got != tt.want {
+			if got := jobTimeout(""); got != tt.want {
 				t.Errorf("jobTimeout() = %s, want %s", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestJobTimeoutFromScriptHeader(t *testing.T) {
+	t.Setenv("TIMELORD_JOB_TIMEOUT", "30m")
+	script := "#>> Timelord\n#>> Timeout: 12h\necho hi\n"
+	if got := jobTimeout(script); got != 12*time.Hour {
+		t.Errorf("jobTimeout(script) = %s, want 12h", got)
 	}
 }
 

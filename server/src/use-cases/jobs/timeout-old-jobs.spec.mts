@@ -37,4 +37,23 @@ describe("Timeout old jobs", () => {
 
     expect(prisma.job.update.mock.calls).toHaveLength(1);
   });
+
+  it("should respect per-job jobTimeoutMinutes over the global default", async () => {
+    prisma.job.findMany.mockResolvedValue([
+      generateJob({
+        createdAt: dayjs().subtract(90, "minute").toDate(),
+        statusCode: -1,
+        jobTimeoutMinutes: 12 * 60,
+      }),
+      generateJob({
+        createdAt: dayjs().subtract(90, "minute").toDate(),
+        statusCode: -1,
+        jobTimeoutMinutes: null,
+      }),
+    ]);
+
+    await timeoutOldJobs();
+
+    expect(prisma.job.update.mock.calls).toHaveLength(1);
+  });
 });

@@ -21,8 +21,9 @@ export async function timeoutOldJobs(): Promise<void> {
   });
 
   for (const job of jobs) {
+    const limitMinutes = job.jobTimeoutMinutes ?? jobTimeoutMinutes;
     const diff = dayjs().diff(dayjs(job.createdAt), "m");
-    if (diff >= jobTimeoutMinutes) {
+    if (diff >= limitMinutes) {
       logger.debug(job, "Job found");
 
       await prisma.job.update({

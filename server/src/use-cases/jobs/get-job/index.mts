@@ -7,6 +7,7 @@ import { prisma } from "#src/prisma-client.mts";
 import { getRobotStore } from "#src/store.mts";
 import { env } from "#src/tools/env.mts";
 import { jobsDispatchedTotal } from "#src/tools/metrics.mts";
+import { parseOptionalJobTimeoutMinutes } from "#src/tools/parse-job-timeout.mts";
 
 import fs from "fs";
 
@@ -59,6 +60,7 @@ export async function getJob() {
         statusCode: -1,
         title: cronObject.title,
         userId: store?.userId,
+        jobTimeoutMinutes: cronObject.jobTimeoutMinutes,
       },
     });
 
@@ -87,7 +89,12 @@ type Cron = {
   cron?: string;
   nextDate?: string;
   keepLastCount: number;
+  jobTimeoutMinutes: number | null;
 };
+
+function jobTimeoutMinutesFromMetadata(metadata: Metadata): number | null {
+  return parseOptionalJobTimeoutMinutes(metadata.jobTimeout);
+}
 
 async function getOneJob(
   configs: Array<GitConfig>,
@@ -175,6 +182,7 @@ async function getOneJob(
         cron: "Manual",
         nextDate: job.nextDate,
         keepLastCount: job.keepLastCount ?? -1,
+        jobTimeoutMinutes: jobTimeoutMinutesFromMetadata(job),
       };
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -300,6 +308,7 @@ async function trySelectCronJob(
             cron: metadata.cron,
             nextDate: metadata.nextDate,
             keepLastCount: metadata.keepLastCount ?? -1,
+            jobTimeoutMinutes: jobTimeoutMinutesFromMetadata(metadata),
           };
         } catch (error) {
           const errorMessage = getErrorMessage(error);
