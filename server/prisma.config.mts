@@ -2,22 +2,14 @@ import path from "node:path";
 
 import { defineConfig } from "prisma/config";
 
-function buildDatabaseUrl(): string {
-  const username = process.env.POSTGRES_USERNAME;
-  const password = process.env.POSTGRES_PASSWORD;
-  const hostname = process.env.POSTGRES_HOSTNAME;
-  const port = process.env.POSTGRES_PORT ?? "5432";
-  const database = process.env.POSTGRES_DATABASE;
+import { resolveDatabaseUrl } from "./src/tools/database-url.mts";
 
-  if (username && password && hostname && database) {
-    return `postgresql://${username}:${password}@${hostname}:${port}/${database}`;
+function prismaCliDatabaseUrl(): string {
+  try {
+    return resolveDatabaseUrl();
+  } catch {
+    return "_";
   }
-
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
-  }
-
-  return "_";
 }
 
 export default defineConfig({
@@ -27,6 +19,6 @@ export default defineConfig({
     path: path.join("prisma", "migrations"),
   },
   datasource: {
-    url: buildDatabaseUrl(),
+    url: prismaCliDatabaseUrl(),
   },
 });

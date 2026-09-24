@@ -4,6 +4,10 @@ import { logger } from "./logger.mts";
 import { createLoggerOptions } from "./logger-config.mts";
 import { router } from "./router.mts";
 import { Store } from "./store.mts";
+import {
+  maskDatabaseUrl,
+  resolveDatabaseUrl,
+} from "./tools/database-url.mts";
 import { env } from "./tools/env.mts";
 
 declare module "@fastify/request-context" {
@@ -29,7 +33,10 @@ export async function startServer() {
 
   try {
     await server.listen({ port, host: "0.0.0.0" });
-    logger.info(`Listening on ${port}`);
+    logger.info(
+      { database: maskDatabaseUrl(resolveDatabaseUrl(env)) },
+      `Listening on ${port}`,
+    );
   } catch (err) {
     server.log.error(err);
     process.exit(1);

@@ -25,10 +25,10 @@
     "generate": "npx prisma generate",
     "==================================================================": "",
     "prewatch": "docker compose up -d && pnpm migrate dev && pnpm generate",
-    "watch": "fnox exec -- tsx watch --require dotenv/config src/index.mts",
-    "watch:prod": "fnox exec --profile production -- tsx watch --require dotenv/config src/index.mts",
-    "start": "fnox exec -- tsx src/index.mts",
-    "start:prod": "fnox exec --profile production -- tsx src/index.mts"
+    "watch": "fnox exec -- tsx watch --require ./env-preload.mts src/index.mts",
+    "watch:prod": "fnox exec --profile production -- tsx watch --require ./env-preload.mts src/index.mts",
+    "start": "fnox exec -- tsx --require ./env-preload.mts src/index.mts",
+    "start:prod": "fnox exec --profile production -- tsx --require ./env-preload.mts src/index.mts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",

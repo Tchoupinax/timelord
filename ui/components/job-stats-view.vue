@@ -140,10 +140,10 @@
               />
             </svg>
             <span
-              v-tippy="{ content: displayedJobs(job).at(-1)?.updatedAt }"
+              v-tippy="{ content: displayedJobs(job).at(-1)?.createdAt }"
               class="font-handwriting"
             >
-              {{ format(displayedJobs(job).at(-1)?.updatedAt!) }}
+              {{ format(displayedJobs(job).at(-1)?.createdAt!) }}
             </span>
           </div>
         </div>
@@ -162,7 +162,7 @@
             v-for="subJob of displayedJobs(job)"
             :key="subJob.id"
             v-tippy="{
-              content: `${format(subJob.updatedAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : isJobCancelled(subJob) ? 'Cancelled' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
+              content: `${format(subJob.createdAt)} - ${subJob.statusCode === 0 ? (subJob.finalState ?? 'Success') : subJob.statusCode === -1 ? 'Running' : isJobCancelled(subJob) ? 'Cancelled' : 'Failed'}${subJob.statusComment ? `\n${subJob.statusComment}` : ''}`,
             }"
             class="flex items-center justify-center flex-1 h-8 transition-all duration-200 border rounded-lg cursor-pointer hover:scale-105 border-white/20"
             :class="{

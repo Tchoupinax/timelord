@@ -11,6 +11,7 @@ export function getCronPeriodStart(
   return Number.isNaN(periodStart.getTime()) ? null : periodStart;
 }
 
+/** Dispatch time (`createdAt`), not `updatedAt` (bumped on logs/completion). */
 export function buildCronPeriodAttemptWhere(params: {
   userId: string;
   hostname: string;
