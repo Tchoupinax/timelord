@@ -16,6 +16,7 @@ export function generateJob(override: Partial<Job> = {}): Job {
     cancelRequestedAt: null,
     nextPlannedExecution: "",
     finalState: null,
+    jobTimeoutMinutes: null,
     ...override,
   };
 }
