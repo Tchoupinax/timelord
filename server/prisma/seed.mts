@@ -12,8 +12,9 @@ import {
   DEV_USER_EMAIL,
   DEV_USER_ID,
 } from "../src/dev-user.mts";
+import { resolveDatabaseUrl } from "../src/tools/database-url.mts";
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg({ connectionString: resolveDatabaseUrl() });
 const prisma = new PrismaClient({ adapter });
 
 const SEED_JOB_IDS = {

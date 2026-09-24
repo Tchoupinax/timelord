@@ -161,6 +161,27 @@ async function getOneJob(
     const jobIndex = metadataFiles.findIndex(metadata => metadata.title === queuedJob.title);
     logger.info(`Queued job detected "${queuedJob.title}" for "${identity}"`);
 
+    const periodStart = getCronPeriodStart(job);
+    if (periodStart) {
+      const alreadyAttempted = await prisma.job.findFirst({
+        where: buildCronPeriodAttemptWhere({
+          userId: store.userId,
+          hostname: identity,
+          title: job.title,
+          periodStart,
+        }),
+      });
+
+      if (alreadyAttempted) {
+        await deleteMatchingQueueEntries({
+          userId: store.userId,
+          title: job.title,
+          agentIdentity: identity,
+        });
+        return await getOneJob(configs, identity);
+      }
+    }
+
     try {
       const file = await injectSecret(
         fs.readFileSync(files[jobIndex] as string, "utf8"),
