@@ -15,12 +15,12 @@ import { generateGitConfig } from "../../entities/git-config.mts";
 import { generateJob } from "../../entities/job.mts";
 
 const masterTokenForAgent = randomUUID();
-const agentHostname = "Integration-Tests";
+const agentHostname = "Integration-Tests-Timeout";
 const jobTitle = "Job timeout metadata test";
 
 const fixturePath = path.join(
   process.cwd(),
-  "test/fixtures/git-configs/e2e-crons/timelord/Integration-Tests/job-timeout-metadata-test.sh",
+  "test/fixtures/git-configs/e2e-crons/timelord/Integration-Tests-Timeout/job-timeout-metadata-test.sh",
 );
 
 const agentHeaders = {
