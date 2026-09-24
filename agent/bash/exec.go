@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -66,7 +67,7 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 
 	stateFilePath := executionPath + "/" + "timelord-state-" + uuid.New().String() + ".txt"
 
-	timeout := jobTimeout()
+	timeout := jobTimeout(bashScript)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -186,9 +187,21 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 	return ExecResult{Status: 0, FinalState: finalState}
 }
 
-// jobTimeout returns the maximum duration of a job. TIMELORD_JOB_TIMEOUT
-// accepts a Go duration ("45m", "2h"); "0" or a negative value disables it.
-func jobTimeout() time.Duration {
+var scriptTimeoutLine = regexp.MustCompile(`(?m)^#>>\s+Timeout:\s*(\S+)`)
+
+// jobTimeout returns the maximum duration of a job. `#>> Timeout:` in the script
+// wins over TIMELORD_JOB_TIMEOUT (Go duration, e.g. "12h"); "0" disables it.
+func jobTimeout(bashScript string) time.Duration {
+	if match := scriptTimeoutLine.FindStringSubmatch(bashScript); len(match) == 2 {
+		if timeout, err := time.ParseDuration(match[1]); err == nil {
+			if timeout < 0 {
+				return 0
+			}
+			return timeout
+		}
+		log.Warn().Str("value", match[1]).Msg("Invalid #>> Timeout in script, using agent default")
+	}
+
 	raw := os.Getenv("TIMELORD_JOB_TIMEOUT")
 	if raw == "" {
 		return defaultJobTimeout

@@ -1,5 +1,15 @@
 const DEFAULT_TIMEOUT_MINUTES = 30;
 
+/** Returns minutes when `timeout` is set; otherwise `null` (use server default). */
+export function parseOptionalJobTimeoutMinutes(
+  timeout: string | undefined,
+): number | null {
+  if (!timeout?.trim()) {
+    return null;
+  }
+  return parseJobTimeoutMinutes(timeout.trim());
+}
+
 export function parseJobTimeoutMinutes(timeout: string): number {
   const match = timeout.trim().match(/^(\d+)\s*([hms])?$/i);
   if (!match) {

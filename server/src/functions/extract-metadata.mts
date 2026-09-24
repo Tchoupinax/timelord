@@ -7,6 +7,8 @@ export type Metadata = {
   periodEnd?: string;
   title: string;
   keepLastCount?: number;
+  /** Raw value from `#>> Timeout:` (e.g. `12h`). */
+  jobTimeout?: string;
 };
 
 export function extractMetadata(file: string): Metadata {
@@ -62,6 +64,13 @@ export function extractMetadata(file: string): Metadata {
     }
   }
 
+  const timeoutRegex = "#>> Timeout: (.*)";
+  const timeoutFound = file.match(timeoutRegex);
+  const jobTimeout =
+    timeoutFound && timeoutFound.length > 0
+      ? (timeoutFound[1] as string).trim()
+      : undefined;
+
   return {
     cron,
     nextDate: nextDate?.toISOString() ?? "",
@@ -69,5 +78,6 @@ export function extractMetadata(file: string): Metadata {
     cronIsActive,
     title,
     keepLastCount,
+    jobTimeout,
   };
 }

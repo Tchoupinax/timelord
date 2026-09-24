@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { parseJobTimeoutMinutes } from "./parse-job-timeout.mts";
+import {
+  parseJobTimeoutMinutes,
+  parseOptionalJobTimeoutMinutes,
+} from "./parse-job-timeout.mts";
+
+describe("parseOptionalJobTimeoutMinutes", () => {
+  it("returns null when unset", () => {
+    expect(parseOptionalJobTimeoutMinutes(undefined)).toBeNull();
+    expect(parseOptionalJobTimeoutMinutes("  ")).toBeNull();
+  });
+
+  it("parses script timeout", () => {
+    expect(parseOptionalJobTimeoutMinutes("12h")).toBe(12 * 60);
+  });
+});
 
 describe("parseJobTimeoutMinutes", () => {
   it("parses hours", () => {
