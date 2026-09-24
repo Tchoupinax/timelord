@@ -1,6 +1,7 @@
 package bash
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +19,13 @@ const (
 	// How long a reader accepts to wait for room in the queue. Beyond that the
 	// entry is dropped: keeping the pipe drained matters more than a log line.
 	logEnqueueTimeout = 5 * time.Second
+	// Carriage-return progress lines (rclone, curl) are coalesced and flushed
+	// at this interval so the UI updates without one HTTP request per redraw.
+	progressFlushInterval = 500 * time.Millisecond
+	// Lines longer than this are never coalesced (see maxLogLineLength chunks).
+	maxCoalesceLineLength = 512
+	// Upper bound on waiting for queued uploads when a job ends.
+	logDrainTimeout = 15 * time.Second
 )
 
 type logEntry struct {
@@ -36,13 +44,18 @@ type logPusher struct {
 	index   int
 	dropped int
 	closed  bool
+
+	pending   map[string]*logEntry
+	lastFlush map[string]time.Time
 }
 
 func newLogPusher(apiUrl string, data *api.ResponseData) *logPusher {
 	pusher := &logPusher{
-		url:   apiUrl + "/logs",
-		data:  data,
-		queue: make(chan logEntry, logQueueSize),
+		url:       apiUrl + "/logs",
+		data:      data,
+		queue:     make(chan logEntry, logQueueSize),
+		pending:   make(map[string]*logEntry),
+		lastFlush: make(map[string]time.Time),
 	}
 
 	pusher.wg.Add(logWorkers)
@@ -53,31 +66,52 @@ func newLogPusher(apiUrl string, data *api.ResponseData) *logPusher {
 	return pusher
 }
 
+func coalesceable(content string) bool {
+	return len(content) <= maxCoalesceLineLength && !strings.Contains(content, "\n")
+}
+
 func (p *logPusher) Push(content string, logType string) {
 	p.mu.Lock()
 	if p.closed {
 		p.mu.Unlock()
 		return
 	}
-	entry := logEntry{
+
+	now := time.Now()
+
+	if !coalesceable(content) {
+		p.flushPendingLocked(logType)
+		entry := logEntry{
+			content:   content,
+			createdAt: now.Format(time.RFC3339),
+			index:     p.index,
+			logType:   logType,
+		}
+		p.index++
+		p.mu.Unlock()
+		p.tryEnqueue(entry)
+		return
+	}
+
+	if pending, ok := p.pending[logType]; ok {
+		pending.content = content
+		pending.createdAt = now.Format(time.RFC3339)
+		if now.Sub(p.lastFlush[logType]) >= progressFlushInterval {
+			p.flushPendingLocked(logType)
+		}
+		p.mu.Unlock()
+		return
+	}
+
+	p.pending[logType] = &logEntry{
 		content:   content,
-		createdAt: time.Now().Format(time.RFC3339),
+		createdAt: now.Format(time.RFC3339),
 		index:     p.index,
 		logType:   logType,
 	}
 	p.index++
+	p.lastFlush[logType] = now
 	p.mu.Unlock()
-
-	timer := time.NewTimer(logEnqueueTimeout)
-	defer timer.Stop()
-
-	select {
-	case p.queue <- entry:
-	case <-timer.C:
-		p.mu.Lock()
-		p.dropped++
-		p.mu.Unlock()
-	}
 }
 
 // Close waits for the queued entries to be sent, then releases the workers.
@@ -88,10 +122,24 @@ func (p *logPusher) Close() {
 		return
 	}
 	p.closed = true
+	for logType := range p.pending {
+		p.flushPendingLocked(logType)
+	}
 	p.mu.Unlock()
 
 	close(p.queue)
-	p.wg.Wait()
+
+	done := make(chan struct{})
+	go func() {
+		p.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(logDrainTimeout):
+		log.Warn().Msg("Log upload drain timed out, continuing job teardown")
+	}
 
 	p.mu.Lock()
 	dropped := p.dropped
@@ -99,6 +147,32 @@ func (p *logPusher) Close() {
 
 	if dropped > 0 {
 		log.Warn().Int("count", dropped).Msg("Log entries dropped, the server could not keep up")
+	}
+}
+
+func (p *logPusher) flushPendingLocked(logType string) {
+	pending, ok := p.pending[logType]
+	if !ok {
+		return
+	}
+	delete(p.pending, logType)
+	entry := *pending
+	p.mu.Unlock()
+	p.tryEnqueue(entry)
+	p.mu.Lock()
+	p.lastFlush[logType] = time.Now()
+}
+
+func (p *logPusher) tryEnqueue(entry logEntry) {
+	timer := time.NewTimer(logEnqueueTimeout)
+	defer timer.Stop()
+
+	select {
+	case p.queue <- entry:
+	case <-timer.C:
+		p.mu.Lock()
+		p.dropped++
+		p.mu.Unlock()
 	}
 }
 
