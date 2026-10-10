@@ -17,18 +17,25 @@
           Status
         </h3>
       </div>
-      <div class="col-span-4">
+      <div class="col-span-2">
         <h3
           class="text-sm font-semibold tracking-wide text-gray-700 uppercase font-handwriting dark:text-gray-200"
         >
           Repository URL
         </h3>
       </div>
-      <div class="col-span-2">
+      <div class="col-span-1">
         <h3
           class="text-sm font-semibold tracking-wide text-gray-700 uppercase font-handwriting dark:text-gray-200"
         >
           Folder
+        </h3>
+      </div>
+      <div class="col-span-3">
+        <h3
+          class="text-sm font-semibold tracking-wide text-gray-700 uppercase font-handwriting dark:text-gray-200"
+        >
+          Synced commit
         </h3>
       </div>
       <div class="col-span-2">
