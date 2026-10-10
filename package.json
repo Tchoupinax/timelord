@@ -17,9 +17,9 @@
     "check": "gitleaks dir -v && gitleaks git -v"
   },
   "devDependencies": {
-    "knip": "6.36.0",
+    "knip": "6.40.0",
     "npm-check-updates": "23.1.0",
-    "turbo": "2.10.13"
+    "turbo": "2.11.7"
   },
-  "packageManager": "pnpm@12.4.2"
+  "packageManager": "pnpm@12.10.1"
 }
