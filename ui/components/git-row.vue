@@ -45,18 +45,37 @@
       </span>
     </div>
 
-    <div class="flex items-center col-span-4">
+    <div class="flex items-center min-w-0 col-span-2">
       <span
         class="font-mono text-sm text-gray-700 truncate transition-colors duration-200 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white"
         >{{ gitConfig.sshUrl }}</span
       >
     </div>
 
-    <div class="flex items-center col-span-2">
+    <div class="flex items-center min-w-0 col-span-1">
       <span
-        class="text-sm text-gray-700 transition-colors duration-200 dark:text-gray-300 font-handwriting group-hover:text-black dark:group-hover:text-white"
+        class="text-sm text-gray-700 truncate transition-colors duration-200 dark:text-gray-300 font-handwriting group-hover:text-black dark:group-hover:text-white"
         >{{ gitConfig.folderNameInGitRepository || "/" }}</span
       >
+    </div>
+
+    <div class="flex items-center min-w-0 col-span-3 gap-2">
+      <template v-if="gitConfig.lastCommitSha || gitConfig.lastCommitMessage">
+        <code
+          v-if="gitConfig.lastCommitSha"
+          class="shrink-0 px-2 py-1 font-mono text-xs text-gray-800 bg-gray-100 border border-gray-200 dark:bg-gray-700/60 dark:border-gray-600 dark:text-gray-200 rounded-lg"
+          :title="gitConfig.lastCommitSha"
+        >{{ gitConfig.lastCommitSha.slice(0, 7) }}</code>
+        <span
+          v-if="gitConfig.lastCommitMessage"
+          class="text-sm text-gray-800 truncate font-handwriting dark:text-gray-200"
+          :title="gitConfig.lastCommitMessage"
+        >{{ gitConfig.lastCommitMessage }}</span>
+      </template>
+      <span
+        v-else
+        class="text-sm text-gray-400 truncate font-handwriting dark:text-gray-500"
+      >No commit synced yet</span>
     </div>
 
     <div class="flex items-center col-span-2">
