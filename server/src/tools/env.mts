@@ -57,6 +57,7 @@ export const env = validate({
     HOMEPAGE_TOKEN: optional(string),
     CRON_START_WINDOW_MINUTES: numberWithDefault(5),
     JOB_DEFAULT_TIMEOUT: string,
+    JOB_QUEUE_MAX_ATTEMPTS: numberWithDefault(1),
     LOG_LEVEL: oneOf("trace", "debug", "info", "warn", "error", "fatal"),
 
     OIDC_CLIENT_ID:

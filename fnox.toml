@@ -7,7 +7,7 @@ type = "plain"
 type = "vault"
 address = "https://vault.mysupercloud.dev"
 path = "fnox/timelord"
-credential_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
+auth_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
 
 [secrets]
 # Local Postgres via POSTGRES_* (see server/src/tools/database-url.mts).
@@ -25,7 +25,7 @@ TIMELORD_REMOTE_API = { default = "https://crons.mysupercloud.dev/api" }
 type = "vault"
 address = "https://vault.mysupercloud.dev"
 path = "k3s-home"
-credential_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
+auth_command = "vault token lookup >/dev/null 2>&1 && vault print token || vault login -method=oidc -token-only"
 
 [profiles.production.secrets]
 DATABASE_URL = { default = "_" }

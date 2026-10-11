@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"math/rand"
 	"os"
 	"os/signal"
 	"sync/atomic"
@@ -50,7 +51,12 @@ func main() {
 func processJob(apiUrl string) {
 	log.Debug().Str("version", buildinfo.Version).Msg("Start job processing task in background")
 
-	for range time.Tick(time.Second * time.Duration(5)) {
+	for {
+		// Sleep ~5s with up to 1s of jitter. The jitter spreads the polling of a
+		// fleet of agents so a recovering server is not hit by a synchronized
+		// thundering herd.
+		time.Sleep(pollInterval())
+
 		if runningJobs.Load() > 0 {
 			log.Debug().Msg("Agent busy, skipping job poll")
 			continue
@@ -65,6 +71,10 @@ func processJob(apiUrl string) {
 
 		log.Info().Msg("Waiting for next job")
 	}
+}
+
+func pollInterval() time.Duration {
+	return 5*time.Second + time.Duration(rand.Int63n(int64(time.Second)))
 }
 
 func runJob(apiUrl string, data *api.ResponseData) {

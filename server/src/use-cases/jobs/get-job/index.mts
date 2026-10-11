@@ -11,6 +11,7 @@ import { parseOptionalJobTimeoutMinutes } from "#src/tools/parse-job-timeout.mts
 
 import fs from "fs";
 
+import { syncAgentRuntime } from "../../agents/sync-agent-runtime.mts";
 import {
   buildCronPeriodAttemptWhere,
   getCronPeriodStart,
@@ -21,7 +22,6 @@ import {
 } from "./cron-priority.mts";
 import { getSriptsByIdentity } from "./get-scripts-by-identity.mts";
 import { injectSecret } from "./inject-secret.mts";
-import { syncAgentRuntime } from "../../agents/sync-agent-runtime.mts";
 import { agentMatchesQueueTarget } from "./queue-target.mts";
 
 export async function getJob() {
@@ -51,17 +51,41 @@ export async function getJob() {
     const id = randomUUID();
     const cronObject = await getOneJob(configs, store.agentHostname);
 
-    await prisma.job.create({
-      data: {
-        cron: cronObject.cron,
-        hostname: store?.agentHostname,
-        id,
-        nextPlannedExecution: cronObject.nextDate,
-        statusCode: -1,
-        title: cronObject.title,
-        userId: store?.userId,
-        jobTimeoutMinutes: cronObject.jobTimeoutMinutes,
-      },
+    // Lease the queue entry and create the tracking Job in a single
+    // transaction. The entry is not deleted on dispatch: it stays leased
+    // (invisible) until the job succeeds, so a crash or lost response can be
+    // redelivered instead of silently lost (at-least-once delivery).
+    await prisma.$transaction(async tx => {
+      if (cronObject.lease) {
+        await tx.jobQueue.update({
+          where: {
+            jobId: {
+              title: cronObject.lease.title,
+              userId: cronObject.lease.userId,
+              hostname: cronObject.lease.hostname,
+            },
+          },
+          data: {
+            leasedAt: new Date(),
+            leasedJobId: id,
+            maxAttempts: cronObject.lease.maxAttempts,
+            attempts: { increment: 1 },
+          },
+        });
+      }
+
+      await tx.job.create({
+        data: {
+          cron: cronObject.cron,
+          hostname: store?.agentHostname,
+          id,
+          nextPlannedExecution: cronObject.nextDate,
+          statusCode: -1,
+          title: cronObject.title,
+          userId: store?.userId,
+          jobTimeoutMinutes: cronObject.jobTimeoutMinutes,
+        },
+      });
     });
 
     if (cronObject.title && cronObject.keepLastCount > -1) {
@@ -90,6 +114,13 @@ type Cron = {
   nextDate?: string;
   keepLastCount: number;
   jobTimeoutMinutes: number | null;
+  /// Queue entry to lease atomically with the job creation (manual jobs only).
+  lease?: {
+    title: string;
+    userId: string;
+    hostname: string;
+    maxAttempts: number;
+  };
 };
 
 function jobTimeoutMinutesFromMetadata(metadata: Metadata): number | null {
@@ -142,6 +173,9 @@ async function getOneJob(
   const queuedJobs = await prisma.jobQueue.findMany({
     where: {
       userId: store.userId,
+      // Skip entries currently leased to an in-flight dispatch; the lease
+      // reclaimer releases them again if the delivery failed.
+      leasedAt: null,
     },
     orderBy: {
       createdAt: "asc",
@@ -187,16 +221,9 @@ async function getOneJob(
         fs.readFileSync(files[jobIndex] as string, "utf8"),
       );
 
-      await prisma.jobQueue.delete({
-        where: {
-          jobId: {
-            title: queuedJob.title,
-            userId: store.userId,
-            hostname: queuedJob.hostname,
-          },
-        },
-      });
-
+      // The queue entry is leased (not deleted) atomically with the Job
+      // creation in getJob (see the $transaction there), so a crash or lost
+      // response can be redelivered.
       return {
         file,
         title: job.title,
@@ -204,6 +231,12 @@ async function getOneJob(
         nextDate: job.nextDate,
         keepLastCount: job.keepLastCount ?? -1,
         jobTimeoutMinutes: jobTimeoutMinutesFromMetadata(job),
+        lease: {
+          title: queuedJob.title,
+          userId: store.userId,
+          hostname: queuedJob.hostname,
+          maxAttempts: job.maxAttempts ?? env.JOB_QUEUE_MAX_ATTEMPTS,
+        },
       };
     } catch (error) {
       const errorMessage = getErrorMessage(error);

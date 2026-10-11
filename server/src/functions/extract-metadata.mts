@@ -9,6 +9,8 @@ export type Metadata = {
   keepLastCount?: number;
   /** Raw value from `#>> Timeout:` (e.g. `12h`). */
   jobTimeout?: string;
+  /** Max dispatch attempts from `#>> Retry:` (e.g. `3`). Undefined = use default. */
+  maxAttempts?: number;
 };
 
 export function extractMetadata(file: string): Metadata {
@@ -71,6 +73,18 @@ export function extractMetadata(file: string): Metadata {
       ? (timeoutFound[1] as string).trim()
       : undefined;
 
+  // `#>> Retry: N` opts a queued job into at-least-once delivery with up to N
+  // total attempts. Absent or invalid means "use the server default".
+  const retryRegex = "#>> Retry: (.*)";
+  const retryFound = file.match(retryRegex);
+  let maxAttempts: number | undefined;
+  if (retryFound && retryFound.length > 0) {
+    const parsed = parseInt((retryFound[1] as string).trim(), 10);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      maxAttempts = parsed;
+    }
+  }
+
   return {
     cron,
     nextDate: nextDate?.toISOString() ?? "",
@@ -79,5 +93,6 @@ export function extractMetadata(file: string): Metadata {
     title,
     keepLastCount,
     jobTimeout,
+    maxAttempts,
   };
 }

@@ -72,6 +72,18 @@ export const jobQueueClearedTotal = new client.Counter({
   registers: [register],
 });
 
+export const jobQueueRedeliveredTotal = new client.Counter({
+  name: "timelord_job_queue_redelivered_total",
+  help: "Queued jobs made visible again after a failed or lost delivery",
+  registers: [register],
+});
+
+export const jobQueueExhaustedTotal = new client.Counter({
+  name: "timelord_job_queue_exhausted_total",
+  help: "Queued jobs dropped after exhausting their delivery attempts",
+  registers: [register],
+});
+
 export const gitRefreshTotal = new client.Counter({
   name: "timelord_git_refresh_total",
   help: "Git config refresh attempts",
