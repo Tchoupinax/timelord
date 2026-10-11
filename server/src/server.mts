@@ -41,4 +41,6 @@ export async function startServer() {
     server.log.error(err);
     process.exit(1);
   }
+
+  return server;
 }

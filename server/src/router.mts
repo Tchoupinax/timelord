@@ -155,6 +155,15 @@ export function router(fastify: FastifyInstance) {
             data,
           });
 
+          // On success, release the lease by deleting the queue entry so it is
+          // not redelivered. Failures are left leased for the reclaimer to
+          // redeliver (or drop once attempts are exhausted).
+          if (body.statusCode === 0) {
+            await prisma.jobQueue.deleteMany({
+              where: { leasedJobId: body.id },
+            });
+          }
+
           recordJobCompletion(body.statusCode, data.finalState);
         }
 

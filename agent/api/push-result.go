@@ -26,8 +26,10 @@ func PushResult(
 	}
 
 	jsonData, _ := json.Marshal(payload)
-	_, err := ApiPost(url, jsonData)
+	// Losing a result means the server never learns the job finished, so retry
+	// hard before giving up.
+	_, err := ApiPostWithRetry(url, jsonData, 5)
 	if err != nil {
-		log.Error().Err(err).Str("job_id", res.Id).Int("status", status).Msg("Failed to push job result")
+		log.Error().Err(err).Str("job_id", res.Id).Int("status", status).Msg("Failed to push job result after retries")
 	}
 }

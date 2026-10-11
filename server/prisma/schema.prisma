@@ -93,6 +93,10 @@ model JobQueue {
   hostname  String   @default("") /// Git agent folder that should run this queued job
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  leasedAt     DateTime? @map("leased_at") /// Set when dispatched; entry is invisible until the lease is released
+  leasedJobId  String?   @map("leased_job_id") /// Job dispatched for the current lease
+  attempts     Int       @default(0) /// How many times this entry has been dispatched
+  maxAttempts  Int       @default(1) @map("max_attempts") /// Redeliver until this many attempts (1 = at-most-once)
 
   @@id(name: "jobId", [title, userId, hostname])
 

@@ -92,7 +92,16 @@ describe("when a queued job targets a specific agent", () => {
 
     expect(response.data.id).toBeDefined();
     expect(response.data.file).toBeDefined();
-    expect(await prisma.jobQueue.count()).toBe(0);
+
+    // Lease-based dispatch: the entry is not deleted, it stays leased
+    // (invisible) until the job succeeds, enabling at-least-once delivery.
+    expect(await prisma.jobQueue.count()).toBe(1);
+    const leasedEntry = await prisma.jobQueue.findFirst({
+      where: { hostname: targetAgent },
+    });
+    expect(leasedEntry?.leasedJobId).toBe(response.data.id);
+    expect(leasedEntry?.leasedAt).not.toBeNull();
+    expect(leasedEntry?.attempts).toBe(1);
 
     const createdJob = await prisma.job.findUnique({
       where: { id: response.data.id },
@@ -114,6 +123,10 @@ describe("when a queued job targets a specific agent", () => {
     const response = await requestJob("Crons-At-Home");
 
     expect(response.data.id).toBeDefined();
-    expect(await prisma.jobQueue.count()).toBe(0);
+    expect(await prisma.jobQueue.count()).toBe(1);
+    const leasedEntry = await prisma.jobQueue.findFirst({
+      where: { hostname: targetAgent },
+    });
+    expect(leasedEntry?.leasedJobId).toBe(response.data.id);
   });
 });

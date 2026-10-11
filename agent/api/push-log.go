@@ -24,8 +24,10 @@ func PushLog(
 	}
 
 	jsonData, _ := json.Marshal(payload)
-	_, err := ApiPost(url, jsonData)
+	// A couple of quick retries smooth over transient blips without blocking the
+	// log workers for long; a definitively lost line is acceptable.
+	_, err := ApiPostWithRetry(url, jsonData, 3)
 	if err != nil {
-		log.Error().Err(err).Str("job_id", res.Id).Msg("Failed to push log entry")
+		log.Error().Err(err).Str("job_id", res.Id).Msg("Failed to push log entry after retries")
 	}
 }
