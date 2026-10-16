@@ -1,4 +1,3 @@
-import { CronExpressionParser } from "cron-parser";
 import { describe, expect, it, vi } from "vitest";
 
 import { extractMetadata, Metadata } from "./extract-metadata.mts";
@@ -20,6 +19,8 @@ echo "Test file"`;
       periodEnd: expect.any(String),
       title: "Test cron",
       keepLastCount: -1,
+      timezone: "",
+      timezoneInvalid: false,
     } satisfies Metadata);
   });
 
@@ -36,6 +37,8 @@ echo "Test file"`;
       periodEnd: "",
       title: "Test no cron",
       keepLastCount: -1,
+      timezone: "",
+      timezoneInvalid: false,
     } satisfies Metadata);
   });
 
@@ -88,12 +91,10 @@ echo "Test file"`;
     `;
 
     const metadata = extractMetadata(file);
-    const interval = CronExpressionParser.parse("0 * * * *", {
-      currentDate: new Date("2026-06-23T10:30:00.000Z"),
-    });
 
     expect(metadata.cronIsActive).toBe(true);
-    expect(metadata.nextDate).toBe(interval.prev().toDate().toISOString());
+    expect(metadata.nextDate).toBe("2026-06-23T10:00:00.000Z");
+    expect(metadata.periodEnd).toBe("2026-06-23T11:00:00.000Z");
 
     vi.useRealTimers();
   });
@@ -110,6 +111,51 @@ echo "Test file"`;
     `;
 
     expect(extractMetadata(file).cronIsActive).toBe(true);
+
+    vi.useRealTimers();
+  });
+
+  it("should interpret When in the script timezone", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-15T08:30:00.000Z"));
+
+    const file = `
+      #!/bin/bash
+      #>> Timelord
+      #>> Timezone: Europe/Paris
+      #>> When: 0 9 * * *
+      echo "Test file"
+    `;
+
+    const metadata = extractMetadata(file);
+
+    expect(metadata.timezone).toBe("Europe/Paris");
+    expect(metadata.timezoneInvalid).toBe(false);
+    // 09:00 in Paris (CET, UTC+1) is 08:00 UTC. 08:30 UTC is inside that period.
+    expect(metadata.nextDate).toBe("2026-01-15T08:00:00.000Z");
+    expect(metadata.periodEnd).toBe("2026-01-16T08:00:00.000Z");
+    expect(metadata.cronIsActive).toBe(true);
+
+    vi.useRealTimers();
+  });
+
+  it("should ignore an unrecognized timezone and keep UTC", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-23T10:30:00.000Z"));
+
+    const file = `
+      #!/bin/bash
+      #>> Timelord
+      #>> Timezone: Not/AZone
+      #>> When: 0 * * * *
+      echo "Test file"
+    `;
+
+    const metadata = extractMetadata(file);
+
+    expect(metadata.timezone).toBe("Not/AZone");
+    expect(metadata.timezoneInvalid).toBe(true);
+    expect(metadata.nextDate).toBe("2026-06-23T10:00:00.000Z");
 
     vi.useRealTimers();
   });

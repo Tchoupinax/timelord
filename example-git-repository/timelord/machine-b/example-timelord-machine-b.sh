@@ -3,6 +3,7 @@
 #>> Timelord
 #>> What: Example timelord <= Assets folder MUST match this
 #>> When: 0 */1 * * *
+#>> Timezone: Europe/Paris
 #>> KeepLast: 10
 
 # Very important to throw error!

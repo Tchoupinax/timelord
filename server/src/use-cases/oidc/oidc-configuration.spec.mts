@@ -11,7 +11,7 @@ describe("OIDC configuration", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
-        json: async () => ({
+        json: () => ({
           authorization_endpoint: "https://sso.example/authorize",
           token_endpoint: "https://sso.example/token",
         }),

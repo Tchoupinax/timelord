@@ -16,6 +16,8 @@ function metadata(
   return {
     cronIsActive: false,
     keepLastCount: -1,
+    timezone: "",
+    timezoneInvalid: false,
     ...override,
   };
 }

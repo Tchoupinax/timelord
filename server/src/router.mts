@@ -34,6 +34,7 @@ import { pushLogs } from "./use-cases/logs/push-logs.mts";
 import { logout } from "./use-cases/oidc/logout.mts";
 import { oidcAuthorization } from "./use-cases/oidc/oidc-authorization.mts";
 import { oidcHandleCallback } from "./use-cases/oidc/oidc-handle-callback.mts";
+import { listSchedule } from "./use-cases/schedule/list-schedule.mts";
 import { createSecret } from "./use-cases/secrets/create-secret.mts";
 import { deleteSecret } from "./use-cases/secrets/delete-secret.mts";
 import { listSecrets } from "./use-cases/secrets/list-secrets.mts";
@@ -190,6 +191,7 @@ export function router(fastify: FastifyInstance) {
     fastify.get("/agents", listAgents);
     fastify.get("/git-configs", listGitConfigs);
     fastify.get("/jobs", listJobs);
+    fastify.get("/schedule", listSchedule);
     fastify.get("/activity", listActivity);
     fastify.get("/logs", listLogs);
     fastify.get("/secrets", listSecrets);

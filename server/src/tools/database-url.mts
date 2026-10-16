@@ -29,7 +29,7 @@ export function isUsableDatabaseUrl(url: string | undefined): url is string {
 }
 
 export function resolveDatabaseUrl(
-  env: DatabaseUrlEnv = process.env as DatabaseUrlEnv,
+  env: DatabaseUrlEnv = process.env,
 ): string {
   if (isUsableDatabaseUrl(env.DATABASE_URL)) {
     return env.DATABASE_URL.trim();

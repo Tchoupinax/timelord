@@ -1,4 +1,4 @@
-import { CronExpressionParser } from "cron-parser";
+import { currentCronPeriod, isValidTimeZone } from "./cron-schedule.mts";
 
 export type Metadata = {
   cron?: string;
@@ -7,6 +7,10 @@ export type Metadata = {
   periodEnd?: string;
   title: string;
   keepLastCount?: number;
+  /** IANA name from `#>> Timezone:` (e.g. `Europe/Paris`). Empty when unset. */
+  timezone: string;
+  /** True when `#>> Timezone:` is set but not a recognized IANA name. */
+  timezoneInvalid: boolean;
   /** Raw value from `#>> Timeout:` (e.g. `12h`). */
   jobTimeout?: string;
   /** Max dispatch attempts from `#>> Retry:` (e.g. `3`). Undefined = use default. */
@@ -22,15 +26,26 @@ export function extractMetadata(file: string): Metadata {
   let keepLastCount = -1;
   let cronIsActive = false;
 
+  // `#>> Timezone:` pins `When` to an IANA zone. Absent or invalid keeps UTC,
+  // which is how cron-parser interprets a schedule with no zone.
+  const timezoneRegex = "#>> Timezone: (.*)";
+  const timezoneFound = file.match(timezoneRegex);
+  const timezone =
+    timezoneFound && timezoneFound.length > 0
+      ? (timezoneFound[1] as string).trim()
+      : "";
+  const timezoneInvalid = timezone.length > 0 && !isValidTimeZone(timezone);
+  const cronTimezone = timezoneInvalid ? undefined : timezone || undefined;
+
   const regex = "#>> When: (.*)";
 
   const found = file.match(regex);
   if (found && found?.length > 0) {
-    cron = found[1] as string;
+    cron = (found[1] as string).trim();
 
-    const interval = CronExpressionParser.parse(cron, { currentDate: now });
-    const periodStart = interval.prev().toDate();
-    periodEnd = interval.next().toDate();
+    const period = currentCronPeriod(cron, now, cronTimezone);
+    const periodStart = period.start;
+    periodEnd = period.end;
 
     // Keep the job eligible for the whole cron period, not only 30 seconds
     // before the next fire. The old window caused missed runs when every agent
@@ -92,6 +107,8 @@ export function extractMetadata(file: string): Metadata {
     cronIsActive,
     title,
     keepLastCount,
+    timezone,
+    timezoneInvalid,
     jobTimeout,
     maxAttempts,
   };

@@ -15,6 +15,8 @@ import { queueTargetMatchesJobHostname } from "./get-job/queue-target.mts";
 type ExternalJob = Job & {
   neverExecuted: boolean;
   keepLastCount: number;
+  timezone?: string;
+  timezoneInvalid?: boolean;
 };
 
 export async function listJobs(
@@ -98,6 +100,8 @@ export async function listJobs(
       userId: "",
       neverExecuted: true,
       keepLastCount: metadata.keepLastCount ?? 0,
+      timezone: metadata.timezone,
+      timezoneInvalid: metadata.timezoneInvalid,
       finalState: null,
       jobTimeoutMinutes: null,
     } satisfies ExternalJob;
@@ -130,12 +134,15 @@ export async function listJobs(
       };
     }),
     jobsCount: jobs.length,
-    jobMetadatas: jobsFromGit.reduce((acc, cur) => {
-      return {
-        ...acc,
-
-        [cur.title ?? ""]: cur.keepLastCount,
+    jobMetadatas: jobsFromGit.reduce<
+      Record<string, { keepLastCount: number; timezone: string; timezoneInvalid: boolean }>
+    >((acc, cur) => {
+      acc[cur.title ?? ""] = {
+        keepLastCount: cur.keepLastCount,
+        timezone: cur.timezone ?? "",
+        timezoneInvalid: cur.timezoneInvalid ?? false,
       };
+      return acc;
     }, {}),
   });
 }

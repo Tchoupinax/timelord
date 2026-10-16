@@ -41,6 +41,7 @@
               />
             </svg>
             Next launch · {{ nextLaunchInfo(job)!.dateLabel }}
+            <span v-if="timezoneCaption(job)"> · {{ timezoneCaption(job) }}</span>
           </p>
 
           <div class="flex justify-between w-full mt-4">
@@ -152,7 +153,10 @@
           <div
             v-for="(_, idx) in Math.max(
               0,
-              Number(jobMetadata[job.title] ?? Math.max(10, displayedJobs(job).length)) -
+              Number(
+                jobMetadata[job.title]?.keepLastCount ??
+                  Math.max(10, displayedJobs(job).length),
+              ) -
                 displayedJobs(job).length,
             )"
             :key="'empty-' + idx"
@@ -250,6 +254,7 @@ import { format } from "timeago.js";
 import type { PropType } from "vue";
 
 import type { ExternalJob } from "~/types/external-job";
+import type { JobScriptMetadata } from "~/types/job-script-metadata";
 import { isJobCancelled } from "~/utils/job-status";
 
 const cronRegex =
@@ -266,7 +271,7 @@ const $props = defineProps({
     required: true,
   },
   jobMetadata: {
-    type: Object as PropType<Record<string, number>>,
+    type: Object as PropType<Record<string, JobScriptMetadata>>,
     required: true,
   },
 });
@@ -428,11 +433,37 @@ const computeJobStats = (job: GroupedJob) => {
   };
 };
 
+const cronTimeZone = (title: string): string | undefined => {
+  const metadata = $props.jobMetadata[title];
+  if (!metadata?.timezone || metadata.timezoneInvalid) {
+    return undefined;
+  }
+
+  return metadata.timezone;
+};
+
+const timezoneCaption = (job: GroupedJob): string => {
+  const metadata = $props.jobMetadata[job.title];
+  if (!metadata?.timezone) {
+    return "";
+  }
+
+  if (metadata.timezoneInvalid) {
+    return "unrecognized timezone";
+  }
+
+  return metadata.timezone;
+};
+
 const getExpectedNextRunAfter = (
   cronString: string,
   after: Date,
+  title: string,
 ): Date =>
-  CronExpressionParser.parse(cronString, { currentDate: after })
+  CronExpressionParser.parse(cronString, {
+    currentDate: after,
+    ...(cronTimeZone(title) ? { tz: cronTimeZone(title) } : {}),
+  })
     .next()
     .toDate();
 
@@ -457,6 +488,7 @@ const isJobDelayed = (job: GroupedJob): boolean => {
   const expectedNext = getExpectedNextRunAfter(
     cronString,
     new Date(lastExec.updatedAt),
+    job.title,
   );
 
   return expectedNext.getTime() < Date.now();
@@ -465,16 +497,21 @@ const isJobDelayed = (job: GroupedJob): boolean => {
 const getNextLaunchDate = (job: GroupedJob): Date | null => {
   const cronString = job.jobs[0]?.cron;
   if (cronString && cronString.match(cronRegex)) {
-    return CronExpressionParser.parse(cronString).next().toDate();
+    return CronExpressionParser.parse(cronString, {
+      ...(cronTimeZone(job.title) ? { tz: cronTimeZone(job.title) } : {}),
+    })
+      .next()
+      .toDate();
   }
 
   return null;
 };
 
-const formatNextLaunchDate = (date: Date): string =>
+const formatNextLaunchDate = (date: Date, timeZone?: string): string =>
   new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
+    ...(timeZone ? { timeZone } : {}),
   }).format(date);
 
 const formatTimeUntil = (date: Date): string => {
@@ -503,7 +540,7 @@ const nextLaunchInfo = (job: GroupedJob) => {
   }
 
   return {
-    dateLabel: formatNextLaunchDate(date),
+    dateLabel: formatNextLaunchDate(date, cronTimeZone(job.title)),
     untilLabel: formatTimeUntil(date),
   };
 };
@@ -517,6 +554,7 @@ const performDelayedSentence = (job: GroupedJob): string => {
   const expectedNext = getExpectedNextRunAfter(
     cronString,
     new Date(lastExec.updatedAt),
+    job.title,
   );
   const totalMinutes = Math.floor(
     (Date.now() - expectedNext.getTime()) / 1000 / 60,

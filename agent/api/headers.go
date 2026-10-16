@@ -14,12 +14,12 @@ func ComputeHeaders() map[string]string {
 	masterToken := os.Getenv("AGENT_MASTER_TOKEN")
 	if masterToken != "" {
 		return map[string]string{
-			"X-Timelord-Hostname":       hostname,
-			"X-Timelord-Agent-Token":    masterToken,
-			"X-Timelord-Active-Job-Id":    GetActiveJobID(),
+			"X-Timelord-Hostname":          hostname,
+			"X-Timelord-Agent-Token":       masterToken,
+			"X-Timelord-Active-Job-Id":     GetActiveJobID(),
 			"X-Timelord-Agent-Instance-Id": GetInstanceID(),
-			"Content-Type":              "application/json",
-			"User-Agent":                buildinfo.UserAgent(),
+			"Content-Type":                 "application/json",
+			"User-Agent":                   buildinfo.UserAgent(),
 		}
 	}
 

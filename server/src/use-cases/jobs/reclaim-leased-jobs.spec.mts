@@ -37,8 +37,8 @@ describe("reclaimLeasedQueueJobs", () => {
 
     await reclaimLeasedQueueJobs();
 
-    expect(prisma.jobQueue.update).not.toHaveBeenCalled();
-    expect(prisma.jobQueue.delete).not.toHaveBeenCalled();
+    expect(prisma.jobQueue.update.mock.calls).toHaveLength(0);
+    expect(prisma.jobQueue.delete.mock.calls).toHaveLength(0);
   });
 
   it("redelivers a failed job while attempts remain", async () => {
@@ -49,9 +49,9 @@ describe("reclaimLeasedQueueJobs", () => {
 
     await reclaimLeasedQueueJobs();
 
-    expect(prisma.jobQueue.update).toHaveBeenCalledTimes(1);
+    expect(prisma.jobQueue.update.mock.calls).toHaveLength(1);
     expect(prisma.jobQueue.update.mock.calls[0]?.[0]?.data?.leasedAt).toBeNull();
-    expect(prisma.jobQueue.delete).not.toHaveBeenCalled();
+    expect(prisma.jobQueue.delete.mock.calls).toHaveLength(0);
   });
 
   it("drops a failed job once attempts are exhausted", async () => {
@@ -62,8 +62,8 @@ describe("reclaimLeasedQueueJobs", () => {
 
     await reclaimLeasedQueueJobs();
 
-    expect(prisma.jobQueue.delete).toHaveBeenCalledTimes(1);
-    expect(prisma.jobQueue.update).not.toHaveBeenCalled();
+    expect(prisma.jobQueue.delete.mock.calls).toHaveLength(1);
+    expect(prisma.jobQueue.update.mock.calls).toHaveLength(0);
   });
 
   it("drops a succeeded entry without redelivering", async () => {
@@ -74,8 +74,8 @@ describe("reclaimLeasedQueueJobs", () => {
 
     await reclaimLeasedQueueJobs();
 
-    expect(prisma.jobQueue.delete).toHaveBeenCalledTimes(1);
-    expect(prisma.jobQueue.update).not.toHaveBeenCalled();
+    expect(prisma.jobQueue.delete.mock.calls).toHaveLength(1);
+    expect(prisma.jobQueue.update.mock.calls).toHaveLength(0);
   });
 
   it("redelivers when the job record is gone and attempts remain", async () => {
@@ -86,6 +86,6 @@ describe("reclaimLeasedQueueJobs", () => {
 
     await reclaimLeasedQueueJobs();
 
-    expect(prisma.jobQueue.update).toHaveBeenCalledTimes(1);
+    expect(prisma.jobQueue.update.mock.calls).toHaveLength(1);
   });
 });
