@@ -1,0 +1,134 @@
+name: Build image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Image name suffix, ui or server"
+        required: true
+        type: string
+      node-version:
+        description: "Node.js version used to build the package"
+        required: true
+        type: string
+      context:
+        description: "Docker build context"
+        required: true
+        type: string
+      dockerfile:
+        description: "Dockerfile path relative to the repository root"
+        required: true
+        type: string
+      platforms:
+        description: "Target platforms, comma-separated"
+        required: true
+        type: string
+      latest:
+        description: "Also tag the image as latest"
+        required: true
+        type: boolean
+      tags:
+        description: "docker/metadata-action tag rules"
+        required: true
+        type: string
+      cache-scope:
+        description: "GitHub Actions cache scope"
+        required: true
+        type: string
+      commit-sha:
+        description: "Value passed to the image as CI_COMMIT_SHA. Empty skips build args."
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build and push
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+    - name: Setup PNPM
+      uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+    - name: Use Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile --filter @timelord/${{ inputs.image }}
+
+    - name: Build
+      if: inputs.image == 'ui'
+      run: pnpm build --filter @timelord/ui
+
+    - name: Build
+      if: inputs.image == 'server'
+      working-directory: server
+      run: pnpm build:ci
+      env:
+        API_URL: "_"
+        CI_COMMIT_SHA: "_"
+        CI_PIPELINE_CREATED: "1"
+        DATABASE_URL: "_"
+        JOB_DEFAULT_TIMEOUT: "_"
+        OIDC_CLIENT_ID: "_"
+        OIDC_CLIENT_SECRET: "_"
+        OIDC_CONFIGURATION_URL: "_"
+        OIDC_PROVIDER_IMAGE: "_"
+        OIDC_PROVIDER_NAME: "_"
+        UI_URL: "_"
+        VAULT_ADDR: "_"
+        VAULT_PATH: "_"
+        VAULT_TOKEN: "_"
+
+    - name: Set up QEMU
+      if: contains(inputs.platforms, 'arm64')
+      uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4
+
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
+      with:
+        images: |
+          ghcr.io/tchoupinax/timelord-${{ inputs.image }}
+          tchoupinax/timelord-${{ inputs.image }}
+        flavor: latest=${{ inputs.latest }}
+        tags: ${{ inputs.tags }}
+
+    - name: Build and push
+      uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.dockerfile }}
+        labels: ${{ steps.meta.outputs.labels }}
+        platforms: ${{ inputs.platforms }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,mode=min,scope=${{ inputs.cache-scope }}
+        build-args: ${{ inputs.commit-sha != '' && format('CI_COMMIT_SHA={0},CI_PIPELINE_CREATED=111111111', inputs.commit-sha) || '' }}
