@@ -7,8 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { extractMetadata } from "../../../src/functions/extract-metadata.mts";
 import { prisma } from "../../../src/prisma-client.mts";
-import { E2E_PORT } from "../../config/e2e-env.mts";
 import { TEST_USER_ID } from "../../config/constants.mts";
+import { E2E_PORT } from "../../config/e2e-env.mts";
 import { generateGitConfig } from "../../entities/git-config.mts";
 
 const masterTokenForAgent = randomUUID();

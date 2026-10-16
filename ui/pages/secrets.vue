@@ -36,6 +36,7 @@
               Dashboard
             </NuxtLink>
 
+            <nav-link-clock />
             <NavLinkActivity />
             <NavLinkAgents />
 

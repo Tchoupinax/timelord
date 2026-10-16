@@ -1,7 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { logger } from "./logger.mts";
 import { PrismaClient } from "../prisma/generated/prisma/index.js";
+import { logger } from "./logger.mts";
 import { resolveDatabaseUrl } from "./tools/database-url.mts";
 import { env } from "./tools/env.mts";
 
@@ -35,7 +35,7 @@ export async function waitForDatabase(
         { err, attempt, maxAttempts, delayMs: delay },
         "Database not ready, retrying",
       );
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }

@@ -27,6 +27,7 @@
     "typeRoots": ["#types", "node_modules/@types"]
   },
   "include": [
+    "env-preload.mts",
     "prisma.config.mts",
     "prisma/seed.mts",
     "scripts",

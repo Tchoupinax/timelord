@@ -31,6 +31,14 @@ export default defineNuxtConfig({
     "nuxt3-notifications",
     "@nuxtjs/tailwindcss",
   ],
+  // @nuxtjs/tailwindcss registers this PostCSS plugin by default. Nuxt then
+  // imports it as an ES module, and Node rejects the `tailwindcss/nesting`
+  // directory, so `nuxt dev` asks to install it on every watch start.
+  postcss: {
+    plugins: {
+      "tailwindcss/nesting": false,
+    },
+  },
   devtools: { enabled: true },
   sourcemap: true,
   devServer: {

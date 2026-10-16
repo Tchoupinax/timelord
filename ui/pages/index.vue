@@ -38,6 +38,7 @@
               Dashboard
             </NuxtLink>
 
+            <nav-link-clock />
             <NavLinkActivity />
             <NavLinkAgents />
 
@@ -514,6 +515,7 @@ import { computed, onMounted, onUnmounted,ref, watch } from "vue";
 
 import type { Agent } from "../../server/prisma/generated/prisma";
 import type { ExternalJob } from "~/types/external-job";
+import type { JobScriptMetadata } from "~/types/job-script-metadata";
 
 const agentCreationModalOpened = ref(false);
 const agentCreationName = ref("");
@@ -521,7 +523,7 @@ const agentCreationResultToken = ref("");
 const agents = ref<Array<Agent>>([]);
 const isAuthenticated = ref(true);
 const jobs = ref<Array<ExternalJob>>([]);
-const jobMetadata = ref({});
+const jobMetadata = ref<Record<string, JobScriptMetadata>>({});
 const jobsCount = ref(0);
 const selectedJobIdToShowLogs = ref("");
 const launchAllModalOpened = ref(false);

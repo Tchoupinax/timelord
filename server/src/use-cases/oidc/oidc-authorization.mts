@@ -4,12 +4,12 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../../logger.mts";
 import { computeAuthorizationUrl } from "../../tools/compute-authorization-url.mts";
+import { env } from "../../tools/env.mts";
 import {
   cookieSecureForUrl,
   parseOAuthReturnTo,
   resolveOAuthRedirectUri,
 } from "../../tools/parse-oauth-return-to.mts";
-import { env } from "../../tools/env.mts";
 
 const oauthCookieMaxAgeSeconds = 60 * 10;
 

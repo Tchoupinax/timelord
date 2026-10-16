@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
 import { PrismaPg } from "@prisma/adapter-pg";
-import { simpleGit } from "simple-git";
 
 import { PrismaClient } from "#prisma-run";
+
+import { simpleGit } from "simple-git";
+
 import {
   DEV_AGENT_MASTER_TOKEN,
   DEV_LIVE_STREAM_JOB_ID,

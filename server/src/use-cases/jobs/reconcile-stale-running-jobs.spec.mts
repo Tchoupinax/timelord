@@ -35,7 +35,7 @@ describe("reconcileRunningJobsForAgent", () => {
       activeJobId: null,
     });
 
-    expect(prisma.job.update).toHaveBeenCalledTimes(2);
+    expect(prisma.job.update.mock.calls).toHaveLength(2);
     expect(prisma.job.update.mock.calls[0]?.[0]?.data?.statusComment).toBe(
       ORPHANED_JOB_STATUS_COMMENT,
     );
@@ -54,7 +54,7 @@ describe("reconcileRunningJobsForAgent", () => {
       activeJobId: "job-1",
     });
 
-    expect(prisma.job.update).toHaveBeenCalledTimes(1);
+    expect(prisma.job.update.mock.calls).toHaveLength(1);
     expect(prisma.job.update.mock.calls[0]?.[0]?.where?.id).toBe("job-2");
   });
 });

@@ -40,6 +40,12 @@
                   Dashboard
                 </NuxtLink>
                 <NuxtLink
+                  to="/clock"
+                  class="block text-sm text-gray-400 transition-colors duration-200 dark:text-gray-300 hover:text-white dark:hover:text-white font-handwriting"
+                >
+                  Clock
+                </NuxtLink>
+                <NuxtLink
                   to="/activity"
                   class="block text-sm text-gray-400 transition-colors duration-200 dark:text-gray-300 hover:text-white dark:hover:text-white font-handwriting"
                 >

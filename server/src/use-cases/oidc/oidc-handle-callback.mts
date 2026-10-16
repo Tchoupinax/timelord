@@ -4,9 +4,9 @@ import { FastifyReply, FastifyRequest } from "fastify";
 
 import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
-import { cookieSecureForUrl } from "../../tools/parse-oauth-return-to.mts";
 import { env } from "../../tools/env.mts";
 import { extractAutheliaData } from "../../tools/extract-authelia-data.mts";
+import { cookieSecureForUrl } from "../../tools/parse-oauth-return-to.mts";
 import { getOidcConfiguration } from "./oidc-configuration.mts";
 
 export async function oidcHandleCallback(
