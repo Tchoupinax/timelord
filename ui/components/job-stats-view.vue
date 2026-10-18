@@ -52,11 +52,7 @@
             </span>
 
             <button
-              v-if="
-                !launchedTitles.has(job.title) &&
-                !job?.jobs[0]?.queuePending &&
-                !runningJob(job)
-              "
+              v-if="!runningJob(job) && !isQueued(job)"
               type="button"
               :disabled="launchingTitle === job.title"
               class="flex items-center px-4 py-2 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
@@ -97,12 +93,20 @@
             </button>
 
             <div
-              v-else-if="
-                // @ts-expect-error
-                job.jobs[0].queuePending ||
-                (launchedTitles.has(job.title) &&
-                  !job.jobs.some(j => j.statusCode === -1))
-              "
+              v-else-if="runningJob(job)"
+              class="flex items-center px-4 py-1.5 space-x-2 border-2 rounded-2xl bg-violet-100 dark:bg-violet-500/20 border-violet-400 dark:border-violet-500"
+            >
+              <div
+                class="w-3 h-3 bg-violet-500 rounded-full dark:bg-violet-400"
+              ></div>
+              <span
+                class="text-sm font-semibold text-violet-800 dark:text-violet-200 font-handwriting"
+                >Running</span
+              >
+            </div>
+
+            <div
+              v-else
               class="flex items-center px-4 py-1.5 space-x-2 border-2 rounded-2xl bg-yellow-100 dark:bg-yellow-500/20 border-yellow-400 dark:border-yellow-500 shadow-md shadow-yellow-200/50 dark:shadow-yellow-500/10 animate-pulse"
             >
               <div
@@ -359,6 +363,10 @@ const startJobNow = async (title: string, hostname: string) => {
 
 const runningJob = (job: GroupedJob) =>
   job.jobs.find(j => j.statusCode === -1 && !j.neverExecuted);
+
+const isQueued = (job: GroupedJob) =>
+  launchedTitles.value.has(job.title) ||
+  job.jobs.some(execution => execution.queuePending);
 
 const showLogs = (jobId: string, title: string) => {
   $emit("showLogsForJobId", jobId, title);
