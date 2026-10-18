@@ -1,10 +1,7 @@
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4"
-    @click.self="emit('close')"
-  >
+  <div v-scroll-lock class="fixed inset-0 z-50">
     <div
-      class="flex h-full max-h-[95vh] w-full max-w-6xl flex-col overflow-hidden bg-white shadow-xl dark:bg-gray-900 xl:rounded-xl"
+      class="flex h-full w-full flex-col overflow-hidden bg-white dark:bg-gray-900"
       role="dialog"
       aria-labelledby="job-logs-title"
     >
@@ -15,8 +12,9 @@
           <h3
             id="job-logs-title"
             class="truncate text-lg font-bold text-gray-900 dark:text-gray-100"
+            :title="heading"
           >
-            Job logs
+            {{ heading }}
           </h3>
           <span
             v-if="isLive"
@@ -116,7 +114,7 @@
 
       <div
         ref="scrollContainer"
-        class="min-h-0 flex-1 overflow-auto bg-gray-50 dark:bg-gray-950"
+        class="min-h-0 min-w-0 flex-1 overflow-auto bg-gray-50 dark:bg-gray-950"
         @scroll="onScroll"
       >
         <p
@@ -135,25 +133,30 @@
 
         <div
           v-else
-          :style="{ height: `${virtualTotalHeight}px`, position: 'relative' }"
+          class="w-max min-w-full"
+          :style="{ height: `${virtualTotalHeight}px` }"
         >
           <div
-            class="absolute left-0 right-0 font-mono text-[13px] leading-5"
-            :style="{ transform: `translateY(${virtualOffsetY}px)` }"
+            class="w-max min-w-full font-mono text-[13px] leading-5"
+            :style="{ paddingTop: `${virtualOffsetY}px` }"
           >
             <div
               v-for="entry in visibleEntries"
               :key="entry.index"
-              class="flex h-5 shrink-0 gap-3 px-3 hover:bg-gray-100/80 dark:hover:bg-gray-800/60"
-              :class="lineClass(entry)"
+              class="group flex h-5 w-max min-w-full hover:bg-gray-100/80 dark:hover:bg-gray-800/60"
             >
               <span
-                class="w-14 shrink-0 select-none text-right tabular-nums text-gray-400 dark:text-gray-500"
+                class="sticky left-0 z-10 w-14 shrink-0 select-none bg-gray-50 px-3 text-right tabular-nums text-gray-400 group-hover:bg-gray-100 dark:bg-gray-950 dark:text-gray-500 dark:group-hover:bg-gray-800"
               >
+                <span
+                  class="absolute inset-y-0 left-0 w-0.5"
+                  :class="severityBarClass(entry)"
+                  aria-hidden="true"
+                />
                 {{ entry.index + 1 }}
               </span>
               <span
-                class="min-w-0 flex-1 overflow-x-auto whitespace-pre text-gray-900 dark:text-gray-100"
+                class="whitespace-pre pr-3 text-gray-900 dark:text-gray-100"
                 v-html="highlightContent(entry.content)"
               />
             </div>
@@ -174,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ jobId: string }>();
+const props = defineProps<{ jobId: string; title?: string }>();
 const emit = defineEmits<{ close: [] }>();
 
 const POLL_INTERVAL_MS = 2000;
@@ -195,7 +198,11 @@ type LogsPayload = {
   totalLogCount: number;
   hasOlder: boolean;
   jobRunning: boolean;
+  jobTitle?: string | null;
 };
+
+const jobTitle = ref(props.title ?? "");
+const heading = computed(() => jobTitle.value || "Job logs");
 
 const entries = ref<LogEntry[]>([]);
 const showEmpty = ref(false);
@@ -254,7 +261,10 @@ const visibleEntries = computed(() =>
 );
 
 function logsUrl(params: Record<string, string>) {
-  const url = new URL(`${config.public.apiEndpoint}/logs`);
+  const url = new URL(
+    `${config.public.apiEndpoint}/logs`,
+    window.location.origin,
+  );
   url.searchParams.set("jobId", props.jobId);
   url.searchParams.set("format", "json");
   for (const [key, value] of Object.entries(params)) {
@@ -276,6 +286,9 @@ async function fetchLogs(params: Record<string, string> = {}) {
       .map((content, index) => ({ index, content }));
   }
   payload.entries ??= [];
+  if (payload.jobTitle) {
+    jobTitle.value = payload.jobTitle;
+  }
   return payload;
 }
 
@@ -455,15 +468,15 @@ function highlightContent(content: string) {
   return `${before}<mark class="rounded bg-amber-200 px-0.5 dark:bg-amber-600/50">${match}</mark>${after}`;
 }
 
-function lineClass(entry: LogEntry) {
+function severityBarClass(entry: LogEntry) {
   const text = entry.content;
   if (/\bERROR\b/i.test(text) || /\berror:/i.test(text)) {
-    return "border-l-2 border-red-400 pl-2 dark:border-red-500";
+    return "bg-red-400 dark:bg-red-500";
   }
   if (/\bWARN(ING)?\b/i.test(text)) {
-    return "border-l-2 border-amber-400 pl-2 dark:border-amber-500";
+    return "bg-amber-400 dark:bg-amber-500";
   }
-  return "";
+  return "bg-transparent";
 }
 
 function downloadLogs() {

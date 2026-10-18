@@ -140,6 +140,7 @@
     <JobResultModal
       v-if="selectedJobIdToShowLogs"
       :job-id="selectedJobIdToShowLogs"
+      :title="selectedJobTitle"
       @close="selectedJobIdToShowLogs = ''"
     />
   </div>
@@ -153,6 +154,7 @@ import type { ActivityItem, ActivityResponse } from "~/types/external-activity";
 const config = useRuntimeConfig();
 const activities = ref<ActivityItem[]>([]);
 const selectedJobIdToShowLogs = ref("");
+const selectedJobTitle = ref("");
 
 const hasLiveActivity = computed(() =>
   activities.value.some(
@@ -160,8 +162,9 @@ const hasLiveActivity = computed(() =>
   ),
 );
 
-const showLogsForJobId = (jobId: string) => {
+const showLogsForJobId = (jobId: string, title = "") => {
   selectedJobIdToShowLogs.value = jobId;
+  selectedJobTitle.value = title;
 };
 
 const refreshActivity = async () => {

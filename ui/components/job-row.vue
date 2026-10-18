@@ -184,7 +184,7 @@ const props = defineProps({
 });
 
 const viewResult = () => {
-  emit("view-result", props.job.id);
+  emit("view-result", props.job.id, props.job.title ?? "");
 };
 
 const putJobInQueue = async (title: string, hostname: string | null) => {

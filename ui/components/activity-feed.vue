@@ -33,7 +33,7 @@
             <button
               v-if="canViewLogs(item)"
               class="text-xs font-medium text-gray-600 transition-colors duration-200 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              @click="$emit('view-logs', item.jobId!)"
+              @click="$emit('view-logs', item.jobId!, item.title)"
             >
               Logs
             </button>
@@ -59,7 +59,7 @@ import { format } from "timeago.js";
 import type { ActivityItem } from "~/types/external-activity";
 import { isJobCancelled } from "~/utils/job-status";
 
-defineEmits<{ "view-logs": [jobId: string] }>();
+defineEmits<{ "view-logs": [jobId: string, title: string] }>();
 
 defineProps<{
   activities: ActivityItem[];
