@@ -72,6 +72,19 @@ func TestExec_NoFinalState(t *testing.T) {
 	}
 }
 
+func TestExec_KeepsShellEnvironmentAndHidesAgentTokens(t *testing.T) {
+	t.Setenv("AGENT_MASTER_TOKEN", "super-secret")
+	t.Setenv("AGENT_TOKEN", "other-secret")
+	t.Setenv("TIMELORD_TEST_MARKER", "kept")
+
+	script := `test -n "$PATH" && test -n "$HOME" && test "$TIMELORD_TEST_MARKER" = kept && test -n "$TIMELORD_STATE" && test -z "$AGENT_MASTER_TOKEN" && test -z "$AGENT_TOKEN"`
+	result := Exec(script, "http://invalid.test", &api.ResponseData{Id: uniqueID(t)})
+
+	if result.Status != 0 {
+		t.Fatalf("Exec() Status = %d, want 0", result.Status)
+	}
+}
+
 func TestExec_FinalStateWarning(t *testing.T) {
 	data := &api.ResponseData{Id: uniqueID(t)}
 	script := `echo "done"; echo $TIMELORD_STATE;echo Warning >> $TIMELORD_STATE`

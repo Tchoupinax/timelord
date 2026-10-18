@@ -83,7 +83,7 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 	go watchCancelRequest(apiUrl, data.Id, cancel, &cancelled, done)
 
 	cmd := exec.CommandContext(ctx, "/bin/bash", "-c", bashScript)
-	cmd.Env = []string{fmt.Sprintf("TIMELORD_STATE=%s", stateFilePath)}
+	cmd.Env = jobEnv(stateFilePath)
 	cmd.Dir = executionPath
 	// Own process group, so background children are killed with the script.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -185,6 +185,54 @@ func Exec(bashScript string, apiUrl string, data *api.ResponseData) ExecResult {
 
 	log.Info().Msg("✅ Script executed with success")
 	return ExecResult{Status: 0, FinalState: finalState}
+}
+
+// jobEnv keeps the agent process environment so jobs can resolve commands
+// and home directories. Replacing it with only TIMELORD_STATE dropped PATH
+// and HOME; Terraform then failed to run getent while installing a provider
+// and reported that as a lookup error against github.com. Agent credentials
+// stay out of the job.
+func jobEnv(stateFilePath string) []string {
+	env := make([]string, 0, len(os.Environ())+2)
+	for _, entry := range os.Environ() {
+		key, _, _ := strings.Cut(entry, "=")
+		if key == "TIMELORD_STATE" || isAgentCredential(key) {
+			continue
+		}
+		env = append(env, entry)
+	}
+	env = append(env, "TIMELORD_STATE="+stateFilePath)
+	if value, ok := envValue(env, "PATH"); !ok || strings.TrimSpace(value) == "" {
+		env = append(env, "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
+	}
+	if value, ok := envValue(env, "HOME"); !ok || strings.TrimSpace(value) == "" {
+		if home, err := os.UserHomeDir(); err == nil && strings.TrimSpace(home) != "" {
+			env = append(env, "HOME="+home)
+		}
+	}
+	return env
+}
+
+func isAgentCredential(key string) bool {
+	switch key {
+	case "AGENT_MASTER_TOKEN", "AGENT_TOKEN":
+		return true
+	default:
+		return false
+	}
+}
+
+func envValue(env []string, key string) (string, bool) {
+	prefix := key + "="
+	var value string
+	found := false
+	for _, entry := range env {
+		if strings.HasPrefix(entry, prefix) {
+			value = strings.TrimPrefix(entry, prefix)
+			found = true
+		}
+	}
+	return value, found
 }
 
 var scriptTimeoutLine = regexp.MustCompile(`(?m)^#>>\s+Timeout:\s*(\S+)`)
