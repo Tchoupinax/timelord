@@ -201,6 +201,7 @@
 
     <div
       v-if="agentCreationModalOpened"
+      v-scroll-lock
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       tabindex="0"
       @click.self="agentCreationModalOpened = false"
@@ -343,6 +344,7 @@
 
     <div
       v-if="launchAllModalOpened"
+      v-scroll-lock
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       tabindex="0"
       @click.self="launchAllModalOpened = false"
@@ -408,6 +410,7 @@
 
     <div
       v-if="cancelJobModalOpened"
+      v-scroll-lock
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       tabindex="0"
       @click.self="closeCancelJobModal"
@@ -501,6 +504,7 @@
     <JobResultModal
       v-if="selectedJobIdToShowLogs"
       :job-id="selectedJobIdToShowLogs"
+      :title="selectedJobTitle"
       @close="selectedJobIdToShowLogs = ''"
     />
 
@@ -526,6 +530,7 @@ const jobs = ref<Array<ExternalJob>>([]);
 const jobMetadata = ref<Record<string, JobScriptMetadata>>({});
 const jobsCount = ref(0);
 const selectedJobIdToShowLogs = ref("");
+const selectedJobTitle = ref("");
 const launchAllModalOpened = ref(false);
 const launchingAllJobs = ref(false);
 const cancelJobModalOpened = ref(false);
@@ -635,8 +640,9 @@ const confirmCancelJob = async () => {
   }
 };
 
-const showLogsForTheJobId = (result: string) => {
+const showLogsForTheJobId = (result: string, title = "") => {
   selectedJobIdToShowLogs.value = result;
+  selectedJobTitle.value = title;
 };
 
 const config = useRuntimeConfig();

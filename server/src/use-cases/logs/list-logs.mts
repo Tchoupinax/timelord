@@ -20,6 +20,7 @@ export type ListLogsResponse = {
   totalLogCount: number;
   hasOlder: boolean;
   jobRunning: boolean;
+  jobTitle: string | null;
 };
 
 export async function listLogs(
@@ -46,7 +47,7 @@ export async function listLogs(
       id: jobId,
       ...userScope,
     },
-    select: { statusCode: true },
+    select: { statusCode: true, title: true },
   });
 
   if (!job) {
@@ -151,6 +152,7 @@ export async function listLogs(
       totalLogCount,
       hasOlder,
       jobRunning,
+      jobTitle: job.title,
     };
   }
 

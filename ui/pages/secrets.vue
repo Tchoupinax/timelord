@@ -169,6 +169,7 @@
 
     <div
       v-if="showModal"
+      v-scroll-lock
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       tabindex="0"
       @click.self="showModal = false"

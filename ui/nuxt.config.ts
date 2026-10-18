@@ -42,7 +42,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   sourcemap: true,
   devServer: {
-    port: 3000,
+    port: 3200,
   },
   vite: {
     server: remoteApiOrigin

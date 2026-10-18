@@ -90,6 +90,7 @@
     <JobResultModal
       v-if="selectedResult"
       :job-id="selectedResult"
+      :title="selectedTitle"
       @close="selectedResult = null"
     />
   </div>
@@ -106,9 +107,11 @@ defineProps({
 });
 
 const selectedResult = ref(null);
+const selectedTitle = ref("");
 
-const showResult = result => {
+const showResult = (result, title = "") => {
   selectedResult.value = result;
+  selectedTitle.value = title;
 };
 </script>
 

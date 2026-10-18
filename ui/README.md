@@ -3,5 +3,5 @@
 ## Environement variables
 
 - `API_URL`: http endpoint of the API (http://localhost:9988)
-- `TIMELORD_REMOTE_API`: production API used by `pnpm watch:front` (proxied through the dev server)
+- `TIMELORD_REMOTE_API`: production API used by `pnpm watch:prod` (proxied through the dev server)
 - `CI_COMMIT_SHA`:

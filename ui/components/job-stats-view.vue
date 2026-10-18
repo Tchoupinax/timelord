@@ -183,7 +183,7 @@
               'bg-violet-500/90 border-violet-500/50 dark:bg-violet-500/40 dark:hover:bg-violet-400/50 dark:border-violet-500/40':
                 subJob.statusCode === -1,
             }"
-            @click="showLogs(subJob.id)"
+            @click="showLogs(subJob.id, job.title)"
           >
             <div v-if="subJob.statusCode === -1" class="flex items-end justify-center space-x-0.5 h-4">
               <div class="w-1 rounded-full bg-violet-200/80 equalizer-bar" style="animation-delay: 0ms" />
@@ -360,8 +360,8 @@ const startJobNow = async (title: string, hostname: string) => {
 const runningJob = (job: GroupedJob) =>
   job.jobs.find(j => j.statusCode === -1 && !j.neverExecuted);
 
-const showLogs = (jobId: string) => {
-  $emit("showLogsForJobId", jobId);
+const showLogs = (jobId: string, title: string) => {
+  $emit("showLogsForJobId", jobId, title);
 };
 
 const displayedJobs = (job: GroupedJob) =>
