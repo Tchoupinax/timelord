@@ -129,6 +129,58 @@ describe("when a cron job was cancelled in the current period", () => {
     expect(await prisma.jobQueue.count()).toBe(0);
   });
 
+  it("should run a manually queued job even when the current period was already attempted", async () => {
+    await prisma.job.deleteMany();
+    await prisma.jobQueue.deleteMany();
+
+    const script = fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "test/fixtures/git-configs/e2e-crons/timelord/Integration-Tests/cancel-test.sh",
+      ),
+      "utf8",
+    );
+    const metadata = extractMetadata(script);
+    const periodStart = metadata.nextDate
+      ? new Date(metadata.nextDate)
+      : new Date();
+
+    await prisma.job.create({
+      data: {
+        id: randomUUID(),
+        createdAt: periodStart,
+        updatedAt: periodStart,
+        cron: "0 * * * *",
+        hostname: agentHostname,
+        nextPlannedExecution: periodStart.toISOString(),
+        statusCode: 0,
+        title: jobTitle,
+        userId: TEST_USER_ID,
+      },
+    });
+
+    await axios.post(
+      `http://localhost:${E2E_PORT}/jobs/queue`,
+      { title: jobTitle, hostname: agentHostname },
+      { headers: { "Content-Type": "application/json" } },
+    );
+
+    const response = await requestJob();
+
+    expect(response.data.id).toBeDefined();
+    const dispatchedJob = await prisma.job.findUnique({
+      where: { id: response.data.id },
+    });
+    expect(dispatchedJob?.cron).toBe("Manual");
+    expect(dispatchedJob?.statusCode).toBe(-1);
+
+    const leasedEntry = await prisma.jobQueue.findFirst({
+      where: { title: jobTitle },
+    });
+    expect(leasedEntry?.leasedJobId).toBe(response.data.id);
+    expect(leasedEntry?.leasedAt).not.toBeNull();
+  });
+
   it("should dispatch a new cron job when the previous cancellation belongs to an earlier period", async () => {
     await prisma.job.deleteMany();
     await prisma.jobQueue.deleteMany();
