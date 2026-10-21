@@ -9,12 +9,12 @@ import { E2E_PORT } from "../../config/e2e-env.mts";
 
 describe("when creating an agent", () => {
   const name = `agent-${randomUUID()}`;
-  let token: unknown;
+  let token: string | undefined;
 
   beforeAll(async () => {
     await prisma.agent.deleteMany({ where: { name } });
 
-    ({ data: { token } = {} } = await axios<{ token: string }>({
+    ({ data: { token } = {} as { token?: string } } = await axios<{ token: string }>({
       url: `http://localhost:${E2E_PORT}/agents`,
       headers: { "Content-Type": "application/json" },
       method: "POST",
