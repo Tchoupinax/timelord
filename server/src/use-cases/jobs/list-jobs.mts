@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 
 import { extractMetadata } from "../../functions/extract-metadata.mts";
+import { logger } from "../../logger.mts";
 import { prisma } from "../../prisma-client.mts";
 import { getHumanStore } from "../../store.mts";
 import { env } from "../../tools/env.mts";
@@ -72,20 +73,30 @@ export async function listJobs(
     }
   }
 
+  // Skip stray files next to agent folders and nested directories: reading
+  // them threw and turned the whole listing into a 500 (empty dashboard).
   let files: Array<string> = [];
   for (const folder of subFolders) {
-    if (fs.existsSync(folder)) {
+    if (fs.existsSync(folder) && fs.statSync(folder).isDirectory()) {
       files = [
         ...files,
-        ...fs.readdirSync(folder).map(file => {
-          return `${folder}/${file}`;
-        }),
+        ...fs
+          .readdirSync(folder)
+          .map(file => `${folder}/${file}`)
+          .filter(file => fs.statSync(file).isFile()),
       ];
     }
   }
 
-  const jobsFromGit: Array<ExternalJob> = files.map(file => {
-    const metadata = extractMetadata(fs.readFileSync(file, "utf-8"));
+  const jobsFromGit: Array<ExternalJob> = files.flatMap(file => {
+    let metadata: ReturnType<typeof extractMetadata>;
+    try {
+      metadata = extractMetadata(fs.readFileSync(file, "utf-8"));
+    } catch (error) {
+      // One unreadable script (e.g. invalid cron) must not hide every job.
+      logger.warn({ err: error, file }, "Could not read job script metadata");
+      return [];
+    }
     return {
       id: randomUUID(),
       createdAt: new Date(),
