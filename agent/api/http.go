@@ -2,10 +2,12 @@ package api
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"math"
 	"net"
 	"net/http"
+	"syscall"
 	"time"
 
 	_ "github.com/Tchoupinax/timelord/agent/logger"
@@ -17,10 +19,15 @@ import (
 var httpClient = &http.Client{
 	Timeout: 30 * time.Second,
 	Transport: &http.Transport{
-		DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
+		DialContext: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 15 * time.Second,
+		}).DialContext,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ResponseHeaderTimeout: 30 * time.Second,
-		MaxIdleConnsPerHost:   8,
+		// Drop idle connections before a proxy or the server resets them.
+		IdleConnTimeout:     15 * time.Second,
+		MaxIdleConnsPerHost: 8,
 	},
 }
 
@@ -88,6 +95,11 @@ func ApiPostWithRetry(
 
 		if err != nil {
 			lastErr = err
+			// The pooled connection was reset. Drop the rest of the pool so
+			// the next attempt dials instead of reusing another dead socket.
+			if IsTransientNetworkError(err) {
+				httpClient.CloseIdleConnections()
+			}
 		} else {
 			lastErr = &httpStatusError{status: status}
 		}
@@ -125,7 +137,8 @@ func doPost(
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error sending POST request")
+		// Callers retry transient failures. Logging each attempt at error
+		// level made a single reset look like a failed heartbeat.
 		return []byte{}, 0, err
 	}
 	defer func() {
@@ -150,6 +163,25 @@ type httpStatusError struct {
 
 func (e *httpStatusError) Error() string {
 	return "unexpected HTTP status " + http.StatusText(e.status)
+}
+
+// IsTransientNetworkError reports connection failures worth retrying, such as
+// "connection reset by peer" on a keep-alive socket the peer already closed.
+func IsTransientNetworkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, io.EOF) ||
+		errors.Is(err, io.ErrUnexpectedEOF) ||
+		errors.Is(err, syscall.ECONNRESET) ||
+		errors.Is(err, syscall.ECONNABORTED) ||
+		errors.Is(err, syscall.EPIPE) ||
+		errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+
+	var netErr net.Error
+	return errors.As(err, &netErr) && netErr.Timeout()
 }
 
 // backoffDuration returns an exponential backoff capped at 30s for the given
