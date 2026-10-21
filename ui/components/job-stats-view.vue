@@ -2,7 +2,7 @@
   <div class="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3">
     <div
       v-for="job of computedJobs"
-      :key="job.title"
+      :key="job.key"
       class="relative p-6 overflow-hidden transition-all duration-300 bg-white border border-gray-200 cursor-pointer group dark:bg-gray-900 dark:border-gray-700 rounded-3xl hover:shadow-xl"
     >
       <div class="relative z-10 flex items-start justify-between mb-4">
@@ -54,13 +54,13 @@
             <button
               v-if="!runningJob(job) && !isQueued(job)"
               type="button"
-              :disabled="launchingTitle === job.title"
+              :disabled="launchingKey === job.key"
               class="flex items-center px-4 py-2 text-gray-700 transition-all duration-200 border border-gray-300 dark:text-gray-200 bg-gray-50 dark:bg-gray-800/40 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 font-handwriting active:scale-95 disabled:opacity-70 disabled:cursor-wait"
-              :class="{ 'animate-pulse': launchingTitle === job.title }"
-              @click="startJobNow(job.title, job.hostname)"
+              :class="{ 'animate-pulse': launchingKey === job.key }"
+              @click="startJobNow(job)"
             >
               <svg
-                v-if="launchingTitle !== job.title"
+                v-if="launchingKey !== job.key"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -89,7 +89,7 @@
                   d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
                 />
               </svg>
-              {{ launchingTitle === job.title ? "Queuing…" : "Launch" }}
+              {{ launchingKey === job.key ? "Queuing…" : "Launch" }}
             </button>
 
             <div
@@ -266,8 +266,8 @@ const cronRegex =
 const { notify } = useNotification();
 
 const $emit = defineEmits(["showLogsForJobId", "refresh"]);
-const launchingTitle = ref<string | null>(null);
-const launchedTitles = ref<Set<string>>(new Set());
+const launchingKey = ref<string | null>(null);
+const launchedKeys = ref<Set<string>>(new Set());
 
 const $props = defineProps({
   jobs: {
@@ -281,83 +281,92 @@ const $props = defineProps({
 });
 
 export type GroupedJob = {
+  key: string;
   title: string;
   hostname: string;
   jobs: Array<ExternalJob>;
 };
 
+// The same script title can live in several agent folders (one per host).
+// Grouping by title alone merged a never-started copy into the card of an
+// already-executed one, so it could not be launched on its own host.
+const groupKey = (job: Pick<ExternalJob, "title" | "hostname">) =>
+  `${job.title ?? ""}::${(job.hostname ?? "").toLowerCase()}`;
+
 watch(
   () => $props.jobs,
   newJobs => {
-    for (const title of launchedTitles.value) {
+    for (const key of launchedKeys.value) {
       const stillQueued = newJobs.some(
-        j => j.title === title && j.queuePending,
+        j => groupKey(j) === key && j.queuePending,
       );
       if (!stillQueued) {
-        launchedTitles.value.delete(title);
+        launchedKeys.value.delete(key);
       }
     }
   },
 );
 
-const hasBeenExecutedAtLeastOnce = (job: GroupedJob) => {
-  // @ts-expect-error
-  return !job.jobs[0].neverExecuted;
-};
+const hasBeenExecutedAtLeastOnce = (job: GroupedJob) =>
+  job.jobs.some(j => !j.neverExecuted);
 
 const computedJobs = computed(() => {
   const groupedJobs: Array<GroupedJob> = [];
 
   for (const job of $props.jobs) {
-    const index = groupedJobs.findIndex(gJob => gJob.title === job.title);
-    if (index !== -1) {
-      // @ts-expect-error
-      groupedJobs[index].jobs.push(job);
+    const key = groupKey(job);
+    const group = groupedJobs.find(gJob => gJob.key === key);
+    if (group) {
+      group.jobs.push(job);
     } else {
       groupedJobs.push({
+        key,
         title: job.title!,
-        hostname: job.hostname!,
+        hostname: job.hostname ?? "",
         jobs: [job],
       });
     }
   }
 
-  return groupedJobs.sort((a, b) => {
-    if (a.title > b.title) {
-      return 1;
-    }
-    if (a.title < b.title) {
-      return -1;
-    }
-    return 0;
-  });
+  return groupedJobs.sort(
+    (a, b) =>
+      a.title.localeCompare(b.title) ||
+      a.hostname.toLowerCase().localeCompare(b.hostname.toLowerCase()),
+  );
 });
 
-const startJobNow = async (title: string, hostname: string) => {
+const startJobNow = async (job: GroupedJob) => {
   const config = useRuntimeConfig();
   const url = `${config.public.apiEndpoint}/jobs/queue`;
-  launchingTitle.value = title;
+  const { key, title, hostname } = job;
+  launchingKey.value = key;
 
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       credentials: "include",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ title, hostname }),
+      body: JSON.stringify({ title, ...(hostname ? { hostname } : {}) }),
     });
+    if (!response.ok) {
+      const data = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      throw new Error(data.message ?? `HTTP ${response.status}`);
+    }
     notify({ title: "Job added in the queue", type: "success", text: title });
-    launchedTitles.value.add(title);
+    launchedKeys.value.add(key);
     $emit("refresh");
-  } catch {
+  } catch (error) {
     notify({
       title: "Error to add job to the queue",
       type: "error",
-      text: title,
+      text: error instanceof Error ? `${title}: ${error.message}` : title,
     });
   } finally {
-    launchingTitle.value = null;
+    launchingKey.value = null;
   }
 };
 
@@ -365,7 +374,7 @@ const runningJob = (job: GroupedJob) =>
   job.jobs.find(j => j.statusCode === -1 && !j.neverExecuted);
 
 const isQueued = (job: GroupedJob) =>
-  launchedTitles.value.has(job.title) ||
+  launchedKeys.value.has(job.key) ||
   job.jobs.some(execution => execution.queuePending);
 
 const showLogs = (jobId: string, title: string) => {

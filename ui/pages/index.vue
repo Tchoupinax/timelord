@@ -383,7 +383,7 @@
 
         <p class="mt-4 text-gray-700 dark:text-gray-300 font-handwriting">
           Are you sure you want to queue all
-          <strong>{{ uniqueJobTitles.length }}</strong>
+          <strong>{{ uniqueJobTargets.length }}</strong>
           job(s)? They will be added to the queue and run one after another.
         </p>
 
@@ -537,9 +537,20 @@ const cancelJobModalOpened = ref(false);
 const selectedRunningJobId = ref("");
 const cancellingJob = ref(false);
 
-const uniqueJobTitles = computed(() => {
-  const titles = jobs.value.map(j => j.title).filter(Boolean) as string[];
-  return [...new Set(titles)];
+// One entry per script and agent folder: the same title can exist on several hosts.
+const uniqueJobTargets = computed(() => {
+  const targets = new Map<string, { title: string; hostname: string }>();
+  for (const job of jobs.value) {
+    if (!job.title) {
+      continue;
+    }
+    const hostname = job.hostname ?? "";
+    const key = `${job.title}::${hostname.toLowerCase()}`;
+    if (!targets.has(key)) {
+      targets.set(key, { title: job.title, hostname });
+    }
+  }
+  return [...targets.values()];
 });
 
 const runningJobs = computed(() =>
@@ -550,19 +561,22 @@ const { notify } = useNotification();
 
 const confirmLaunchAllJobs = async () => {
   launchingAllJobs.value = true;
-  const titles = uniqueJobTitles.value;
+  const targets = uniqueJobTargets.value;
   let successCount = 0;
   let failCount = 0;
 
   try {
-    for (const title of titles) {
+    for (const { title, hostname } of targets) {
       try {
-        await fetch(`${config.public.apiEndpoint}/jobs/queue`, {
+        const response = await fetch(`${config.public.apiEndpoint}/jobs/queue`, {
           credentials: "include",
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title }),
+          body: JSON.stringify({ title, ...(hostname ? { hostname } : {}) }),
         });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         successCount++;
       } catch {
         failCount++;
