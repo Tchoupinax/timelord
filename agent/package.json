@@ -7,6 +7,6 @@
     "watch": "vai go run *.go",
     "watch:prod": "vai go run *.go",
     "test": "go test ./...",
-    "lint": "go fmt ./... && golangci-lint run || true"
+    "lint": "go fmt ./... && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0 run"
   }
 }

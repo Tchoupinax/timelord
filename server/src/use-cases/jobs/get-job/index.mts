@@ -12,6 +12,7 @@ import { parseOptionalJobTimeoutMinutes } from "#src/tools/parse-job-timeout.mts
 import fs from "fs";
 
 import { syncAgentRuntime } from "../../agents/sync-agent-runtime.mts";
+import { listJobAssetDirectories } from "../get-job-assets.mts";
 import {
   buildCronPeriodAttemptWhere,
   getCronPeriodStart,
@@ -97,7 +98,9 @@ export async function getJob() {
     return {
       id,
       file: Buffer.from(cronObject.file).toString("base64"),
-      hasAssets: true,
+      // The agent downloads a zip only when a repository actually has one.
+      // Always reporting true made it save the "No assets found" JSON as a zip.
+      hasAssets: listJobAssetDirectories(configs, cronObject.title).length > 0,
     };
   } catch (err) {
     logger.error(err);

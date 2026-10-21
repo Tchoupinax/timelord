@@ -3,9 +3,13 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/rand"
+	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -82,6 +86,15 @@ func runJob(apiUrl string, data *api.ResponseData) {
 	// The counter gates job polling and the self-update: it must come back down
 	// whatever happens, otherwise the agent stays busy forever.
 	defer runningJobs.Add(-1)
+	defer func() {
+		if data.ExtractPath == "" {
+			return
+		}
+		log.Info().Msg("Cleaning")
+		if err := os.RemoveAll(data.ExtractPath); err != nil {
+			log.Error().Err(err).Msg("Error while removing assets")
+		}
+	}()
 	defer api.SetActiveJobID("")
 
 	defer func() {
@@ -90,6 +103,20 @@ func runJob(apiUrl string, data *api.ResponseData) {
 			api.PushResult(apiUrl+"/job", data, 1, "", "")
 		}
 	}()
+
+	// A corrupt archive used to be logged and then ignored, so the script ran
+	// without the files it expects. A server with no assets is not a failure.
+	if data.HasAssets {
+		if err := prepareAssets(apiUrl, data); err != nil {
+			if errors.Is(err, file.ErrNoAssets) {
+				log.Info().Str("job_id", data.Id).Msg("No assets attached to this job")
+			} else {
+				log.Error().Err(err).Str("job_id", data.Id).Msg("Error preparing job assets")
+				api.PushResult(apiUrl+"/job", data, 1, "Error", assetFailureComment(err))
+				return
+			}
+		}
+	}
 
 	result := bash.Exec(data.File, apiUrl, data)
 	log.Debug().Msg(data.Id)
@@ -106,12 +133,40 @@ func runJob(apiUrl string, data *api.ResponseData) {
 		result.FinalState,
 		statusComment,
 	)
+}
 
-	// At the end of the process, clean assets
-	log.Info().Msg("Cleaning")
-	if err := os.RemoveAll(data.ExtractPath); err != nil {
-		log.Error().Err(err).Msg("Error while removing assets")
+func prepareAssets(apiUrl string, data *api.ResponseData) error {
+	folder := "/tmp/timelord"
+	if err := os.MkdirAll(folder, os.ModePerm); err != nil {
+		return fmt.Errorf("create assets folder: %w", err)
 	}
+
+	zipFilePath := filepath.Join(folder, data.Id+".zip")
+	extractPath := filepath.Join(folder, data.Id)
+	defer func() {
+		_ = os.Remove(zipFilePath)
+	}()
+
+	assetsURL := apiUrl + "/job/assets?jobId=" + url.QueryEscape(data.Id)
+	if err := file.DownloadFile(assetsURL, zipFilePath); err != nil {
+		return err
+	}
+	if err := file.Unzip(zipFilePath, extractPath); err != nil {
+		_ = os.RemoveAll(extractPath)
+		return fmt.Errorf("extract job assets: %w", err)
+	}
+
+	data.ExtractPath = extractPath
+	return nil
+}
+
+func assetFailureComment(err error) string {
+	comment := "Failed to prepare job assets: " + err.Error()
+	const max = 500
+	if len(comment) > max {
+		return comment[:max]
+	}
+	return comment
 }
 
 func getJob(url string) *api.ResponseData {
@@ -142,32 +197,6 @@ func getJob(url string) *api.ResponseData {
 
 	data.File = string(decodedBytes)
 
-	// 🚀 Download assets if attached to this cron job
-	if data.HasAssets {
-		folder := "/tmp/timelord/"
-		if err := os.MkdirAll(folder, os.ModePerm); err != nil {
-			log.Error().Err(err).Str("folder", folder).Msg("Failed to create assets folder")
-		}
-
-		zipFilePath := folder + data.Id + ".zip"
-		extractPath := folder + data.Id
-
-		assetsUrl := url + "/assets?jobId=" + data.Id
-		if err := file.DownloadFile(assetsUrl, zipFilePath); err != nil {
-			log.Error().Err(err).Str("url", assetsUrl).Msg("Error downloading job assets")
-		}
-
-		if err := file.Unzip(zipFilePath, extractPath); err != nil {
-			log.Error().Err(err).Str("archive", zipFilePath).Msg("Error extracting job assets")
-		}
-
-		if err := os.Remove(zipFilePath); err != nil {
-			log.Error().Err(err).Str("path", zipFilePath).Msg("Failed to remove assets archive")
-		}
-
-		data.ExtractPath = extractPath
-	}
-
 	return &data
 }
 
@@ -179,17 +208,26 @@ func heartbeat(apiUrl string) {
 
 	log.Debug().Str("version", reportedVersion).Msg("Start heartbeat")
 
-	for range time.Tick(time.Second * time.Duration(10)) {
+	// One heartbeat at a time. Overlapping POSTs on a dead keep-alive
+	// connection are what surface as "connection reset by peer": net/http
+	// replays a GET, but not a POST, so the poll hides the reset and the
+	// heartbeat does not. Retry the POST on a fresh connection.
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
 		payload := map[string]any{
 			"version":     reportedVersion,
 			"activeJobId": api.GetActiveJobID(),
 		}
-		jsonData, _ := json.Marshal(payload)
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
+			log.Warn().Err(err).Msg("heartbeat payload failed")
+			continue
+		}
 
-		go func() {
-			if _, err := api.ApiPost(apiUrl+"/heartbeat", jsonData); err != nil {
-				log.Warn().Err(err).Msg("heartbeat failed")
-			}
-		}()
+		if _, err := api.ApiPostWithRetry(apiUrl+"/heartbeat", jsonData, 3); err != nil {
+			log.Warn().Err(err).Msg("heartbeat failed")
+		}
 	}
 }

@@ -1,3 +1,5 @@
+import { finished } from "node:stream/promises";
+
 import { ZipArchive } from "archiver";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import fs from "fs";
@@ -8,6 +10,48 @@ import { prisma } from "../../prisma-client.mts";
 import { getRobotStore } from "../../store.mts";
 import { env } from "../../tools/env.mts";
 
+type AssetConfig = {
+  enabled: boolean;
+  name: string;
+};
+
+// Directories named timelord-assets/<job title> inside enabled git configs.
+// A missing folder is skipped so another repository can still provide the files.
+export function listJobAssetDirectories(
+  configs: ReadonlyArray<AssetConfig>,
+  jobTitle: string | null | undefined,
+): string[] {
+  if (!jobTitle) {
+    return [];
+  }
+
+  const directories: string[] = [];
+  for (const config of configs) {
+    if (!config.enabled) {
+      continue;
+    }
+
+    const folder = path.join(
+      env.GIT_CONFIGS_REPOSITORY,
+      config.name,
+      "timelord-assets",
+      jobTitle,
+    );
+
+    try {
+      if (!fs.statSync(folder).isDirectory()) {
+        continue;
+      }
+    } catch {
+      continue;
+    }
+
+    directories.push(folder);
+  }
+
+  return directories;
+}
+
 export async function getJobAssets(
   request: FastifyRequest<{ Querystring: { jobId: string } }>,
   reply: FastifyReply,
@@ -17,7 +61,7 @@ export async function getJobAssets(
 
   if (!jobId) {
     logger.error("No message id found in query params");
-    reply.send({
+    reply.status(400).send({
       error: "No message id found in query params",
     });
     return;
@@ -35,43 +79,45 @@ export async function getJobAssets(
 
   if (!job) {
     logger.error("No job found");
-    reply.send({
+    reply.status(404).send({
       error: "No job found",
     });
     return;
   }
 
-  const folders = configs
-    // Only use repositories enabled
-    .filter(c => c.enabled)
-    .map(c =>
-      path.join(
-        env.GIT_CONFIGS_REPOSITORY,
-        c.name,
-        "timelord-assets",
-        job.title!,
-      ),
-    );
+  const directories = listJobAssetDirectories(configs, job.title);
+  if (directories.length === 0) {
+    reply.status(404).send({ error: "No assets found" });
+    return;
+  }
 
-  for (const folder of folders) {
-    if (fs.existsSync(folder)) {
-      const zipFileName = "asset.zip";
+  await streamAssetZip(reply, directories);
+}
 
-      reply.header(
-        "Content-Disposition",
-        `attachment; filename=${zipFileName}`,
-      );
-      reply.header("Content-Type", "application/zip");
+// reply.raw is used so the zip is not buffered. Without hijack, Fastify writes
+// its own response when the handler returns and the agent receives a file that
+// is not a valid zip.
+async function streamAssetZip(
+  reply: FastifyReply,
+  directories: string[],
+): Promise<void> {
+  reply.hijack();
+  reply.raw.writeHead(200, {
+    "Content-Disposition": "attachment; filename=asset.zip",
+    "Content-Type": "application/zip",
+  });
 
-      const archive = new ZipArchive({ zlib: { level: 9 } });
+  const archive = new ZipArchive({ zlib: { level: 9 } });
+  archive.pipe(reply.raw);
+  for (const folder of directories) {
+    archive.directory(folder, false);
+  }
 
-      archive.pipe(reply.raw);
-      archive.directory(folder, false);
-
-      await archive.finalize();
-    } else {
-      reply.send({ msg: "No assets found" });
-      return;
-    }
+  try {
+    await archive.finalize();
+    await finished(reply.raw);
+  } catch (err) {
+    logger.error({ err }, "Failed to stream job assets");
+    reply.raw.destroy();
   }
 }
