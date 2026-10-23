@@ -170,7 +170,11 @@ func assetFailureComment(err error) string {
 }
 
 func getJob(url string) *api.ResponseData {
-	body, _ := api.ApiGet(url)
+	body, err := api.ApiGet(url)
+	if err != nil {
+		// Server or proxy unreachable: ApiGet already logged it, poll again.
+		return nil
+	}
 
 	// Unmarshal the JSON body into the struct
 	var data api.ResponseData
