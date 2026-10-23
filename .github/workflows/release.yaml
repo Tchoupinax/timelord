@@ -65,7 +65,7 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Check build success 🦫
-      uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@a9365b7dea332dfa67e1f5c1b861f6ae147111f3 # v0
+      uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-release@935fd491152f48048fa9ff56c80d5deeca15f5d1 # v0
       with:
         workingDirectory: agent
         appId: ${{ secrets.DEPLOY_APP_ID }}
