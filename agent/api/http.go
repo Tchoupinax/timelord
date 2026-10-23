@@ -3,10 +3,13 @@ package api
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"math"
+	"math/rand"
 	"net"
 	"net/http"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,7 +29,10 @@ var httpClient = &http.Client{
 		TLSHandshakeTimeout:   10 * time.Second,
 		ResponseHeaderTimeout: 30 * time.Second,
 		// Drop idle connections before a proxy or the server resets them.
-		IdleConnTimeout:     15 * time.Second,
+		// Kept well below common reverse proxy idle timeouts (Traefik, LBs):
+		// a POST sent on a socket the proxy already closed fails with
+		// "connection reset by peer" and net/http does not replay it.
+		IdleConnTimeout:     5 * time.Second,
 		MaxIdleConnsPerHost: 8,
 	},
 }
@@ -34,49 +40,36 @@ var httpClient = &http.Client{
 func ApiGet(
 	url string,
 ) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := do(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
-	}
-
-	for key, value := range ComputeHeaders() {
-		req.Header.Set(key, value)
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error sending GET request")
+		log.Warn().Err(err).Str("url", url).Msg("GET request failed")
 		return []byte{}, err
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Warn().Err(err).Msg("failed to close GET response body")
-		}
-	}()
-
-	log.Debug().Str("status", resp.Status).Msg("GET response received")
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error reading GET response body")
+	if resp.status >= 400 {
+		err := &httpStatusError{status: resp.status}
+		log.Warn().Err(err).Str("url", url).Str("body", snippet(resp.body)).Msg("GET request rejected")
 		return []byte{}, err
 	}
 
-	return body, nil
+	return resp.body, nil
 }
 
 func ApiPost(
 	url string,
 	data []byte,
 ) ([]byte, error) {
-	body, _, err := doPost(url, data)
-	return body, err
+	resp, err := do(http.MethodPost, url, data)
+	if err != nil {
+		return []byte{}, err
+	}
+	return resp.body, nil
 }
 
-// ApiPostWithRetry retries transient failures (network errors and 5xx
-// responses) with exponential backoff. It is meant for calls we cannot afford
-// to lose, such as reporting a finished job's result. maxAttempts must be >= 1.
+// ApiPostWithRetry retries failures caused by the path to the server rather
+// than by the server itself: network errors, 5xx, and the plain-text 404 a
+// reverse proxy (Traefik) answers while it restarts and before its routes are
+// loaded. Backoff is exponential with jitter, capped at 30s. It is meant for
+// calls we cannot afford to lose. maxAttempts must be >= 1.
 func ApiPostWithRetry(
 	url string,
 	data []byte,
@@ -88,9 +81,9 @@ func ApiPostWithRetry(
 
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		body, status, err := doPost(url, data)
-		if err == nil && status < 500 {
-			return body, nil
+		resp, err := do(http.MethodPost, url, data)
+		if err == nil && !IsRetryableStatus(resp.status, resp.contentType) {
+			return resp.body, nil
 		}
 
 		if err != nil {
@@ -101,7 +94,7 @@ func ApiPostWithRetry(
 				httpClient.CloseIdleConnections()
 			}
 		} else {
-			lastErr = &httpStatusError{status: status}
+			lastErr = &httpStatusError{status: resp.status}
 		}
 
 		if attempt == maxAttempts {
@@ -109,7 +102,14 @@ func ApiPostWithRetry(
 		}
 
 		backoff := backoffDuration(attempt)
-		log.Warn().
+		// A single failure is usually a stale pooled connection and the retry
+		// on a fresh one succeeds, so only surface repeated failures. Callers
+		// log the final error once all attempts are exhausted.
+		event := log.Warn()
+		if attempt == 1 {
+			event = log.Debug()
+		}
+		event.
 			Err(lastErr).
 			Str("url", url).
 			Int("attempt", attempt).
@@ -122,39 +122,73 @@ func ApiPostWithRetry(
 	return []byte{}, lastErr
 }
 
-func doPost(
-	url string,
-	data []byte,
-) ([]byte, int, error) {
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+type response struct {
+	status      int
+	contentType string
+	body        []byte
+}
+
+func do(method, url string, data []byte) (*response, error) {
+	var reqBody io.Reader
+	if data != nil {
+		reqBody = bytes.NewReader(data)
+	}
+	req, err := http.NewRequest(method, url, reqBody)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	for key, value := range ComputeHeaders() {
 		req.Header.Set(key, value)
 	}
 
+	// Callers decide how loud a failure is: a single reset during a proxy
+	// restart is expected and retried.
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		// Callers retry transient failures. Logging each attempt at error
-		// level made a single reset look like a failed heartbeat.
-		return []byte{}, 0, err
+		return nil, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Warn().Err(err).Msg("failed to close POST response body")
+			log.Warn().Err(err).Msg("failed to close response body")
 		}
 	}()
 
-	// Read the response body
+	log.Debug().Str("method", method).Str("status", resp.Status).Msg("response received")
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Error reading POST response body")
-		return []byte{}, resp.StatusCode, err
+		return nil, err
 	}
 
-	return body, resp.StatusCode, nil
+	return &response{
+		status:      resp.StatusCode,
+		contentType: resp.Header.Get("Content-Type"),
+		body:        body,
+	}, nil
+}
+
+// IsRetryableStatus reports HTTP answers that come from the infrastructure in
+// front of the server rather than from its business logic. While Traefik
+// restarts it answers 502/503/504, and a plain-text "404 page not found" until
+// its routes are loaded. The Timelord server always answers 404 with JSON, so
+// that one is final.
+func IsRetryableStatus(status int, contentType string) bool {
+	switch {
+	case status >= 500, status == http.StatusRequestTimeout, status == http.StatusTooManyRequests:
+		return true
+	case status == http.StatusNotFound:
+		return !strings.Contains(contentType, "application/json")
+	}
+	return false
+}
+
+func snippet(body []byte) string {
+	const max = 200
+	if len(body) > max {
+		return string(body[:max])
+	}
+	return string(body)
 }
 
 type httpStatusError struct {
@@ -162,7 +196,7 @@ type httpStatusError struct {
 }
 
 func (e *httpStatusError) Error() string {
-	return "unexpected HTTP status " + http.StatusText(e.status)
+	return fmt.Sprintf("unexpected HTTP status %d %s", e.status, http.StatusText(e.status))
 }
 
 // IsTransientNetworkError reports connection failures worth retrying, such as
@@ -184,15 +218,27 @@ func IsTransientNetworkError(err error) bool {
 	return errors.As(err, &netErr) && netErr.Timeout()
 }
 
-// backoffDuration returns an exponential backoff capped at 30s for the given
-// 1-based attempt number: 1s, 2s, 4s, 8s, ...
+// retryBaseBackoff is a variable so tests can shorten it.
+var retryBaseBackoff = time.Second
+
+// SetRetryBaseBackoff overrides the first retry delay and returns the previous
+// value. Only meant for tests of packages that hit an unreachable API.
+func SetRetryBaseBackoff(d time.Duration) time.Duration {
+	previous := retryBaseBackoff
+	retryBaseBackoff = d
+	return previous
+}
+
+// backoffDuration returns an exponential backoff with +/-20% jitter, capped at
+// 30s, for the given 1-based attempt number: ~1s, 2s, 4s, 8s, 16s, 30s, ...
+// The jitter keeps a fleet of agents from hammering a recovering proxy in sync.
 func backoffDuration(attempt int) time.Duration {
-	const base = time.Second
 	const max = 30 * time.Second
 
-	d := time.Duration(math.Pow(2, float64(attempt-1))) * base
+	d := time.Duration(math.Pow(2, float64(attempt-1))) * retryBaseBackoff
 	if d > max || d <= 0 {
-		return max
+		d = max
 	}
-	return d
+	jitter := time.Duration(rand.Int63n(int64(d)/5*2+1)) - d/5
+	return d + jitter
 }

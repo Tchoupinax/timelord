@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestDownloadFileSavesZip(t *testing.T) {
@@ -66,7 +67,10 @@ func TestDownloadFileDoesNotRetryNotFound(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		calls.Add(1)
-		http.Error(w, "missing", http.StatusNotFound)
+		// The Timelord server answers its 404s with JSON.
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"Job not found"}`))
 	}))
 	t.Cleanup(server.Close)
 
@@ -98,6 +102,35 @@ func TestDownloadFileRetriesConnectionReset(t *testing.T) {
 	}
 	if got := calls.Load(); got < 2 {
 		t.Fatalf("calls = %d, want at least 2", got)
+	}
+}
+
+func TestDownloadFileRidesOutProxyRestart(t *testing.T) {
+	downloadBaseBackoff = time.Millisecond
+	t.Cleanup(func() { downloadBaseBackoff = time.Second })
+
+	payload := zipBytes(t, "note.txt", "hello")
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		switch calls.Add(1) {
+		case 1:
+			http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		case 2:
+			// Traefik before its routes are loaded.
+			http.Error(w, "404 page not found", http.StatusNotFound)
+		default:
+			w.Header().Set("Content-Type", "application/zip")
+			_, _ = w.Write(payload)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	output := filepath.Join(t.TempDir(), "job.zip")
+	if err := DownloadFile(server.URL, output); err != nil {
+		t.Fatalf("DownloadFile: %v", err)
+	}
+	if got := calls.Load(); got != 3 {
+		t.Fatalf("calls = %d, want 3", got)
 	}
 }
 
