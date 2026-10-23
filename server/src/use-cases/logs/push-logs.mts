@@ -30,6 +30,19 @@ export async function pushLogs(
 
   const { content, createdAt, jobId, index, type } = data;
 
+  const job = await prisma.job.findFirst({
+    where: {
+      id: jobId,
+      userId: store.userId,
+      hostname: store.agentHostname,
+    },
+    select: { id: true },
+  });
+  if (!job) {
+    reply.status(404).send({ msg: "Job not found" });
+    return;
+  }
+
   await prisma.$transaction([
     prisma.log.create({
       data: {

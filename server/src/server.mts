@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { LogController } from "fastify";
 
 import { logger } from "./logger.mts";
 import { createLoggerOptions } from "./logger-config.mts";
@@ -18,9 +18,23 @@ declare module "@fastify/request-context" {
 
 export async function createServer() {
   const fastify = Fastify({
+    bodyLimit: 1024 * 1024,
     logger: createLoggerOptions(env.LOG_LEVEL),
-    disableRequestLogging: true,
+    logController: new LogController({ disableRequestLogging: true }),
   });
+
+  fastify.addHook("onSend", async (_request, reply) => {
+    reply.headers({
+      "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+      "Referrer-Policy": "no-referrer",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+    });
+  });
+
   await fastify.register(router);
 
   return fastify;

@@ -1,6 +1,6 @@
 import fastifyRequestContext from "@fastify/request-context";
 
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fs from "fs";
 
 import { logger } from "./logger.mts";
@@ -8,7 +8,7 @@ import { extractAgentMetadata } from "./middlewares/extract-agent-metadata.mts";
 import { extractHumanMetadata } from "./middlewares/extract-human-metadata.mts";
 import { registerHttpMetrics } from "./middlewares/http-metrics.mts";
 import { prisma } from "./prisma-client.mts";
-import { StoreUnavailableError } from "./store.mts";
+import { getRobotStore, StoreUnavailableError } from "./store.mts";
 import { env } from "./tools/env.mts";
 import { prometheus, recordJobCompletion } from "./tools/metrics.mts";
 import { setupSSH } from "./tools/setup-ssh.mts";
@@ -124,10 +124,25 @@ export function router(fastify: FastifyInstance) {
             statusComment?: string;
           };
         }>,
+        reply: FastifyReply,
       ) => {
         const body = request.body;
 
         if (body.id) {
+          const store = getRobotStore();
+          const job = await prisma.job.findFirst({
+            where: {
+              id: body.id,
+              userId: store.userId,
+              hostname: store.agentHostname,
+            },
+            select: { id: true },
+          });
+          if (!job) {
+            reply.status(404).send({ msg: "Job not found" });
+            return;
+          }
+
           const data: {
             statusCode: number;
             finalState?: string;

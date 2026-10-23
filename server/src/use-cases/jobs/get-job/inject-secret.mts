@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import vault from "node-vault";
 
 import { logger } from "#src/logger.mts";
@@ -13,6 +10,90 @@ const options = {
   endpoint: env.VAULT_ADDR,
   token: env.VAULT_TOKEN,
 };
+
+const vaultRetryDelayMs = 30_000;
+const unreachableCodes = new Set([
+  "EAI_AGAIN",
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+]);
+
+// A dead Vault is expected in local and e2e runs. Remember it briefly so each
+// log line does not open a socket and dump the Axios error, which includes the
+// Vault token.
+let vaultUnreachableUntil = 0;
+
+function vaultReadsPaused(): boolean {
+  return Date.now() < vaultUnreachableUntil;
+}
+
+function errorCode(err: unknown): string | undefined {
+  if (!err || typeof err !== "object" || !("code" in err)) {
+    return undefined;
+  }
+  return typeof err.code === "string" ? err.code : undefined;
+}
+
+function isVaultUnreachable(err: unknown): boolean {
+  const code = errorCode(err);
+  if (code !== undefined && unreachableCodes.has(code)) {
+    return true;
+  }
+  if (err instanceof AggregateError) {
+    return err.errors.some(cause => isVaultUnreachable(cause));
+  }
+  if (err instanceof Error && err.cause !== undefined) {
+    return isVaultUnreachable(err.cause);
+  }
+  return false;
+}
+
+function logVaultFailure(err: unknown) {
+  if (isVaultUnreachable(err)) {
+    const alreadyPaused = vaultReadsPaused();
+    vaultUnreachableUntil = Date.now() + vaultRetryDelayMs;
+    if (alreadyPaused) {
+      return;
+    }
+    logger.warn(
+      {
+        err: err instanceof Error ? err.message : String(err),
+        vault: env.VAULT_ADDR,
+      },
+      "Vault is unreachable, falling back to database secrets",
+    );
+    return;
+  }
+
+  logger.error(
+    { err: err instanceof Error ? err.message : String(err) },
+    "Vault request failed, falling back to database secrets",
+  );
+}
+
+async function readVaultData(): Promise<Record<string, string> | undefined> {
+  if (!env.VAULT_ADDR || !env.VAULT_TOKEN || vaultReadsPaused()) {
+    return undefined;
+  }
+
+  try {
+    const vaultClient = vault(options);
+    const data: Record<string, string> | undefined = await vaultClient
+      .read(env.VAULT_PATH)
+      .then(
+        (body: { data?: { data?: Record<string, string> } }) => body.data?.data,
+      );
+    vaultUnreachableUntil = 0;
+    return data ?? {};
+  } catch (err) {
+    logVaultFailure(err);
+    return undefined;
+  }
+}
 
 export function injectSecret(fileWithoutSecrets: string): Promise<string> {
   logger.info("Inject secret");
@@ -44,20 +125,9 @@ async function replacementFunction(match: string) {
   const store = getRobotStore();
 
   const secretKey = match.replace("$${", "").replace("}", "");
-  let secret: string | null = null;
-
-  if (env.VAULT_ADDR && env.VAULT_TOKEN) {
-    logger.info("Getting secret from Vault is accepted");
-
-    try {
-      const vaultClient = vault(options);
-      secret = await vaultClient
-        .read(env.VAULT_PATH)
-        .then(secret => secret.data.data?.[secretKey]);
-    } catch (err) {
-      logger.error(err);
-    }
-  }
+  logger.info("Getting secret from Vault is accepted");
+  const secrets = await readVaultData();
+  const secret = secrets?.[secretKey] ?? null;
 
   if (secret) {
     logger.info("Secret found in Vault");
@@ -120,31 +190,20 @@ async function findSecretInLine(
 ): Promise<{ name: string; value: string } | null> {
   let secret;
 
-  if (env.VAULT_ADDR && env.VAULT_TOKEN) {
-    logger.info("findSecretInLine Vault accepted");
+  logger.info("findSecretInLine Vault accepted");
+  const vaultSecrets = await readVaultData();
+  if (vaultSecrets) {
+    const secretName = Object.keys(vaultSecrets).find(name => {
+      const secretValue = vaultSecrets[name];
+      return secretValue !== undefined && secretValue.length > 0 && value.includes(secretValue);
+    });
+    const secretValue = secretName ? vaultSecrets[secretName] : undefined;
 
-    try {
-      const vaultClient = vault(options);
-      const secrets = await vaultClient
-        .read(env.VAULT_PATH)
-
-        .then(data => data.data.data);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const secretName = Object.keys(secrets).filter(name =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        value.includes(secrets[name]),
-      )[0];
-
-      if (secretName) {
-        return {
-          name: secretName,
-
-          value: secrets[secretName],
-        };
-      }
-    } catch (err) {
-      logger.error(err);
+    if (secretName && secretValue) {
+      return {
+        name: secretName,
+        value: secretValue,
+      };
     }
   }
 

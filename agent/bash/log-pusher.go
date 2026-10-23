@@ -1,7 +1,6 @@
 package bash
 
 import (
-	"strings"
 	"sync"
 	"time"
 
@@ -11,20 +10,15 @@ import (
 )
 
 const (
-	// Number of log entries buffered before the readers slow down.
+	// How many uploads can sit in the worker queue before the dispatcher waits.
+	// The backlog in front of this queue is unbounded: a line is never dropped
+	// and the script reader never blocks on an upload.
 	logQueueSize = 2048
 	// Concurrent uploads. One goroutine per line used to be spawned, which
 	// could mean thousands of simultaneous HTTP requests on a verbose job.
 	logWorkers = 4
-	// How long a reader accepts to wait for room in the queue. Beyond that the
-	// entry is dropped: keeping the pipe drained matters more than a log line.
-	logEnqueueTimeout = 5 * time.Second
-	// Carriage-return progress lines (rclone, curl) are coalesced and flushed
-	// at this interval so the UI updates without one HTTP request per redraw.
-	progressFlushInterval = 500 * time.Millisecond
-	// Lines longer than this are never coalesced (see maxLogLineLength chunks).
-	maxCoalesceLineLength = 512
-	// Upper bound on waiting for queued uploads when a job ends.
+	// Upper bound on waiting for queued uploads when a job ends. Workers keep
+	// sending after this; the job teardown does not wait forever.
 	logDrainTimeout = 15 * time.Second
 )
 
@@ -41,77 +35,46 @@ type logPusher struct {
 	queue   chan logEntry
 	wg      sync.WaitGroup
 	mu      sync.Mutex
+	cond    *sync.Cond
+	backlog []logEntry
 	index   int
-	dropped int
 	closed  bool
-
-	pending   map[string]*logEntry
-	lastFlush map[string]time.Time
 }
 
 func newLogPusher(apiUrl string, data *api.ResponseData) *logPusher {
 	pusher := &logPusher{
-		url:       apiUrl + "/logs",
-		data:      data,
-		queue:     make(chan logEntry, logQueueSize),
-		pending:   make(map[string]*logEntry),
-		lastFlush: make(map[string]time.Time),
+		url:   apiUrl + "/logs",
+		data:  data,
+		queue: make(chan logEntry, logQueueSize),
 	}
+	pusher.cond = sync.NewCond(&pusher.mu)
 
 	pusher.wg.Add(logWorkers)
 	for range logWorkers {
 		go pusher.worker()
 	}
+	go pusher.dispatch()
 
 	return pusher
 }
 
-func coalesceable(content string) bool {
-	return len(content) <= maxCoalesceLineLength && !strings.Contains(content, "\n")
-}
-
+// Push records one log line. Every line is uploaded. Push does not wait for
+// the server, so a fast script cannot fill the pipe and stall the agent.
 func (p *logPusher) Push(content string, logType string) {
 	p.mu.Lock()
+	defer p.mu.Unlock()
 	if p.closed {
-		p.mu.Unlock()
 		return
 	}
 
-	now := time.Now()
-
-	if !coalesceable(content) {
-		p.flushPendingLocked(logType)
-		entry := logEntry{
-			content:   content,
-			createdAt: now.Format(time.RFC3339),
-			index:     p.index,
-			logType:   logType,
-		}
-		p.index++
-		p.mu.Unlock()
-		p.tryEnqueue(entry)
-		return
-	}
-
-	if pending, ok := p.pending[logType]; ok {
-		pending.content = content
-		pending.createdAt = now.Format(time.RFC3339)
-		if now.Sub(p.lastFlush[logType]) >= progressFlushInterval {
-			p.flushPendingLocked(logType)
-		}
-		p.mu.Unlock()
-		return
-	}
-
-	p.pending[logType] = &logEntry{
+	p.backlog = append(p.backlog, logEntry{
 		content:   content,
-		createdAt: now.Format(time.RFC3339),
+		createdAt: time.Now().Format(time.RFC3339),
 		index:     p.index,
 		logType:   logType,
-	}
+	})
 	p.index++
-	p.lastFlush[logType] = now
-	p.mu.Unlock()
+	p.cond.Signal()
 }
 
 // Close waits for the queued entries to be sent, then releases the workers.
@@ -122,12 +85,8 @@ func (p *logPusher) Close() {
 		return
 	}
 	p.closed = true
-	for logType := range p.pending {
-		p.flushPendingLocked(logType)
-	}
+	p.cond.Signal()
 	p.mu.Unlock()
-
-	close(p.queue)
 
 	done := make(chan struct{})
 	go func() {
@@ -140,39 +99,27 @@ func (p *logPusher) Close() {
 	case <-time.After(logDrainTimeout):
 		log.Warn().Msg("Log upload drain timed out, continuing job teardown")
 	}
-
-	p.mu.Lock()
-	dropped := p.dropped
-	p.mu.Unlock()
-
-	if dropped > 0 {
-		log.Warn().Int("count", dropped).Msg("Log entries dropped, the server could not keep up")
-	}
 }
 
-func (p *logPusher) flushPendingLocked(logType string) {
-	pending, ok := p.pending[logType]
-	if !ok {
-		return
-	}
-	delete(p.pending, logType)
-	entry := *pending
-	p.mu.Unlock()
-	p.tryEnqueue(entry)
-	p.mu.Lock()
-	p.lastFlush[logType] = time.Now()
-}
+// dispatch moves the backlog onto the worker queue. It is the only sender.
+func (p *logPusher) dispatch() {
+	defer close(p.queue)
 
-func (p *logPusher) tryEnqueue(entry logEntry) {
-	timer := time.NewTimer(logEnqueueTimeout)
-	defer timer.Stop()
-
-	select {
-	case p.queue <- entry:
-	case <-timer.C:
+	for {
 		p.mu.Lock()
-		p.dropped++
+		for len(p.backlog) == 0 && !p.closed {
+			p.cond.Wait()
+		}
+		if len(p.backlog) == 0 {
+			p.mu.Unlock()
+			return
+		}
+		entry := p.backlog[0]
+		p.backlog[0] = logEntry{}
+		p.backlog = p.backlog[1:]
 		p.mu.Unlock()
+
+		p.queue <- entry
 	}
 }
 

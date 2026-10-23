@@ -14,6 +14,7 @@ export async function extractAgentMetadata(
       isRobot: false,
       isHuman: false,
     });
+    reply.status(401).send({ msg: "Not authorized" });
     return;
   }
 
@@ -64,7 +65,7 @@ export async function extractAgentMetadata(
           isHuman: false,
         });
 
-        reply.status(403);
+        reply.status(403).send({ msg: "Not authorized" });
         return;
       }
     } else {

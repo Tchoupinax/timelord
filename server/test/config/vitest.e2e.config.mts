@@ -7,6 +7,7 @@ export default defineConfig({
   esbuild: false,
   oxc: false,
   test: {
+    isolate: false,
     env: e2eEnv,
     globals: true,
     sequence: {

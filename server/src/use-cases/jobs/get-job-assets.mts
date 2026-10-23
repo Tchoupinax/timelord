@@ -74,6 +74,8 @@ export async function getJobAssets(
   const job = await prisma.job.findFirst({
     where: {
       id: jobId,
+      userId: store.userId,
+      hostname: store.agentHostname,
     },
   });
 
