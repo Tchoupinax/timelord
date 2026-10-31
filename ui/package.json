@@ -16,11 +16,11 @@
     "lint:vue:check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@nuxtjs/color-mode": "4.0.1",
+    "@nuxtjs/color-mode": "4.1.0",
     "@nuxtjs/tailwindcss": "6.14.0",
     "body-scroll-lock": "4.0.0-beta.0",
     "cron-parser": "5.10.2",
-    "nuxt": "4.6.2",
+    "nuxt": "4.6.3",
     "nuxt-shiki": "0.3.2",
     "nuxt3-notifications": "1.4.0",
     "prismjs": "1.30.0",
@@ -34,7 +34,7 @@
     "@nuxt/eslint": "1.17.0",
     "@types/body-scroll-lock": "3.1.2",
     "@types/node": "26.6.5",
-    "@typescript-eslint/parser": "8.72.0",
+    "@typescript-eslint/parser": "8.72.1",
     "eslint": "10.13.0",
     "eslint-config-tchoupinax": "2.6.1",
     "tailwindcss": "3.4.19",

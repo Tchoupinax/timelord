@@ -1,10 +1,10 @@
 [tools]
 # Match package.json "packageManager" so pnpm does not try to re-install another version via corepack.
-pnpm = "12.15.0"
+pnpm = "12.16.1"
 fnox = "latest"
 "go:github.com/sgtdi/vai" = "v1.2.1"
 go = "1.27.3"
 golangci-lint = "2.15.0"
-node = "24.22.1"
+node = "24.22.2"
 tilt = "latest"
 vault = "latest"
