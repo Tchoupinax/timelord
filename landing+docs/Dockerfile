@@ -1,4 +1,4 @@
-FROM node:24.22.1 AS base
+FROM node:26.12.1 AS base
 ENV FORCE_COLOR=0
 RUN corepack enable
 WORKDIR /opt/docusaurus
