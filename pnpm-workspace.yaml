@@ -40,3 +40,7 @@ minimumReleaseAgeExclude:
 - knip@6.36.0
 
 minimumReleaseAgeStrict: true
+
+permissions:
+  node-modules-inspector:
+    skills: false

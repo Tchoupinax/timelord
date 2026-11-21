@@ -2,13 +2,13 @@
 
 # Build on the native host arch (BUILDPLATFORM) so pnpm/prisma do not run under QEMU.
 # supportedArchitectures still pulls optional deps for TARGETARCH.
-FROM --platform=$BUILDPLATFORM node:24.22.1-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:26.13.1-alpine AS builder
 
 ARG TARGETARCH
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm --activate
+RUN npm install -g corepack && corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json server/
@@ -36,9 +36,9 @@ RUN pnpm generate
 
 WORKDIR /app
 
-RUN pnpm deploy --filter=@timelord/server --prod --legacy /deploy
+RUN pnpm deploy --filter=@timelord/server --prod /deploy
 
-FROM node:24.22.1-alpine AS runner
+FROM node:26.13.1-alpine AS runner
 
 ARG TARGETARCH
 ARG CI_COMMIT_SHA

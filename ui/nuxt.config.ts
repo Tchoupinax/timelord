@@ -42,6 +42,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   sourcemap: true,
   devServer: {
+    host: "localhost",
     port: 3200,
   },
   vite: {

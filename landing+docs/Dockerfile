@@ -1,6 +1,6 @@
-FROM node:24.22.1 AS base
+FROM node:26.13.1 AS base
 ENV FORCE_COLOR=0
-RUN corepack enable
+RUN npm install -g corepack && corepack enable
 WORKDIR /opt/docusaurus
 
 ########################################################################
