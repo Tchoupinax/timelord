@@ -8,7 +8,7 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-RUN npm install -g corepack && corepack enable
+RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json server/
