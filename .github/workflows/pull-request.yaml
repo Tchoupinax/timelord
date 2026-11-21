@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Autodetect labels 🔍
-      uses: tchoupinax/repo-config/shared-actions/steps/dx/automatically-apply-labels@a9365b7dea332dfa67e1f5c1b861f6ae147111f3 # v0
+      uses: tchoupinax/repo-config/shared-actions/steps/dx/automatically-apply-labels@ef26c526304212d80c2fcfa733bc78c2e5844c7b # v0
       with:
         appId: ${{ secrets.DEPLOY_APP_ID }}
         privateKey: ${{ secrets.DEPLOY_APP_KEY }}
@@ -124,6 +124,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check build success 🦫
-      uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@a9365b7dea332dfa67e1f5c1b861f6ae147111f3 # v0
+      uses: tchoupinax/repo-config/shared-actions/steps/golang/goreleaser-build-only@ef26c526304212d80c2fcfa733bc78c2e5844c7b # v0
       with:
         workingDirectory: agent
