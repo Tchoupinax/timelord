@@ -8,7 +8,7 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-RUN corepack enable
+RUN npm install -g corepack && corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json server/
@@ -36,7 +36,7 @@ RUN pnpm generate
 
 WORKDIR /app
 
-RUN pnpm deploy --filter=@timelord/server --prod --legacy /deploy
+RUN pnpm deploy --filter=@timelord/server --prod /deploy
 
 FROM node:26.13.1-alpine AS runner
 
