@@ -57,7 +57,7 @@
   "devDependencies": {
     "@swc/core": "1.16.22",
     "@types/archiver": "8.0.0",
-    "@types/node": "26.6.6",
+    "@types/node": "26.6.10",
     "@vitest/ui": "5.1",
     "eslint": "10.15.0",
     "eslint-config-tchoupinax": "2.6.1",
