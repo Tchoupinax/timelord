@@ -67,7 +67,7 @@
     "unplugin-swc": "2.0.0",
     "vite-node": "6.0.0",
     "vitest": "5.1",
-    "vitest-mock-extended": "5.1.1"
+    "vitest-mock-extended": "6.0.1"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
